@@ -158,13 +158,14 @@ export default function AppPage() {
     }
   }
 
-  // ---- Fix: always pass a literal "Part1" to <Part1> ----
+  // ---- Fix: always pass a literal "Part1" to <Part1> via type guard ----
   type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
-  const part1Value: Part1Value = {
-    pair_id: pairId,
-    part_name: "Part1",
-    ...(data?.part_name === "Part1" ? data : {}),
-  };
+  function isPart1(p: Parts | null): p is Part1Value {
+    return !!p && p.part_name === "Part1";
+  }
+  const part1Value: Part1Value = isPart1(data)
+    ? data
+    : { pair_id: pairId, part_name: "Part1" };
 
   if (!email)
     return (
@@ -223,11 +224,10 @@ export default function AppPage() {
           value={part1Value}
           onChange={(fields) =>
             setData((prev) => {
-              const base: Part1Value =
-                prev?.part_name === "Part1"
-                  ? (prev as Part1Value)
-                  : { pair_id: pairId, part_name: "Part1" };
-              return { ...base, ...fields };
+              const base: Part1Value = isPart1(prev)
+                ? prev
+                : { pair_id: pairId, part_name: "Part1" };
+              return { ...base, ...fields } as Part1Value;
             })
           }
           onSave={() => save()}
@@ -489,3 +489,4 @@ function PartSection({
     </div>
   );
 }
+
