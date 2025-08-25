@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { ChangeEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Roster = {
@@ -159,6 +158,14 @@ export default function AppPage() {
     }
   }
 
+  // ---- Fix: always pass a literal "Part1" to <Part1> ----
+  type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
+  const part1Value: Part1Value = {
+    pair_id: pairId,
+    part_name: "Part1",
+    ...(data?.part_name === "Part1" ? data : {}),
+  };
+
   if (!email)
     return (
       <div style={{ padding: 20, fontFamily: "system-ui" }}>
@@ -213,9 +220,15 @@ export default function AppPage() {
       {/* Part I */}
       {part === "Part1" && (
         <Part1
-          value={data ?? { pair_id: pairId, part_name: "Part1" }}
+          value={part1Value}
           onChange={(fields) =>
-            setData((prev) => ({ ...(prev ?? { pair_id: pairId, part_name: "Part1" }), ...fields }))
+            setData((prev) => {
+              const base: Part1Value =
+                prev?.part_name === "Part1"
+                  ? (prev as Part1Value)
+                  : { pair_id: pairId, part_name: "Part1" };
+              return { ...base, ...fields };
+            })
           }
           onSave={() => save()}
           disabled={!canEdit || saving}
