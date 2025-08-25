@@ -4,17 +4,29 @@ import type { Parts } from "@/app/app/page";
 
 export type PartName = "Part1" | "Part2" | "Part3" | "Part4";
 
+// Helper type: payload should NOT carry identifiers
+type PartsWithoutIds = Omit<Parts, "pair_id" | "part_name">;
+
 export async function getParts(pair_id: string) {
-  // returns all parts rows for a given pair (caller can filter)
   return supabase.from("parts").select("*").eq("pair_id", pair_id);
 }
 
 export async function savePart(
   pair_id: string,
   part_name: PartName,
-  payload: Partial<Parts>
+  payload: Partial<PartsWithoutIds>
 ) {
-  const row: Parts = { pair_id, part_name, ...(payload as Parts) };
-  // NOTE: select().single() after upsert is often useful to get canonical row back
-  return supabase.from("parts").upsert(row, { onConflict: "pair_id,part_name" }).select().single();
+  // Destructure to drop any accidental ids from the payload
+  const { pair_id: _pi, part_name: _pn, ...rest } = (payload ?? {}) as Record<string, unknown>;
+  const row: Parts = {
+    pair_id,
+    part_name,
+    ...(rest as Partial<PartsWithoutIds>),
+  };
+
+  return supabase
+    .from("parts")
+    .upsert(row, { onConflict: "pair_id,part_name" })
+    .select()
+    .single();
 }
