@@ -1,76 +1,82 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Roster = {
   pair_id: string;
-  school_name: string;
-  educator_email: string;
-  educator_name: string;
-  evaluator_email: string;
-  evaluator_name: string;
-  resolution_email: string;
-  resolution_name: string;
+  school_name: string | null;
+  educator_email: string | null;
+  educator_name: string | null;
+  evaluator_email: string | null;
+  evaluator_name: string | null;
+  resolution_email: string | null;
+  resolution_name: string | null;
 };
 
 type PartName = "Part1" | "Part2" | "Part3" | "Part4";
 
-type Parts = {
+export type Parts = {
   pair_id: string;
   part_name: PartName;
 
-  // ---- Part 1 (goals) fields ----
-  goal_statement1?: string;
-  why_goal1?: string;
-  measure1?: string;
-  why_measure1?: string;
-  monitoring_plan1?: string;
-  success_criteria1?: string;
-  timeline1?: string;
+  // Part I
+  goal_statement1?: string | null;
+  why_goal1?: string | null;
+  measure1?: string | null;
+  why_measure1?: string | null;
+  monitoring_plan1?: string | null;
+  success_criteria1?: string | null;
+  timeline1?: string | null;
 
-  goal_statement2?: string;
-  why_goal2?: string;
-  measure2?: string;
-  why_measure2?: string;
-  monitoring_plan2?: string;
-  success_criteria2?: string;
-  timeline2?: string;
+  goal_statement2?: string | null;
+  why_goal2?: string | null;
+  measure2?: string | null;
+  why_measure2?: string | null;
+  monitoring_plan2?: string | null;
+  success_criteria2?: string | null;
+  timeline2?: string | null;
 
-  goal_statement3?: string;
-  why_goal3?: string;
-  measure3?: string;
-  why_measure3?: string;
-  monitoring_plan3?: string;
-  success_criteria3?: string;
-  timeline3?: string;
+  goal_statement3?: string | null;
+  why_goal3?: string | null;
+  measure3?: string | null;
+  why_measure3?: string | null;
+  monitoring_plan3?: string | null;
+  success_criteria3?: string | null;
+  timeline3?: string | null;
 
-  // ---- Example fields for other parts (scaffold) ----
-  conversation_summary?: string; // Part2
-  key_evidence?: string;         // Part2
+  // Part II (scaffold)
+  conversation_summary?: string | null;
+  key_evidence?: string | null;
 
-  resolution_decision?: string;  // Part3
-  resolution_rationale?: string; // Part3
+  // Part III (scaffold)
+  resolution_decision?: string | null;
+  resolution_rationale?: string | null;
 
-  outcome_summary?: string;      // Part4
-  goal_evidence?: string;        // Part4
+  // Part IV (scaffold)
+  outcome_summary?: string | null;
+  goal_evidence?: string | null;
 };
 
 export default function AppPage() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState<string>("");
   const [pairs, setPairs] = useState<Roster[]>([]);
-  const [pairId, setPairId] = useState("");
+  const [pairId, setPairId] = useState<string>("");
   const [part, setPart] = useState<PartName>("Part1");
   const [data, setData] = useState<Parts | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  // Load user (email used for UI gating only; RLS is enforced server-side)
+  // Load user email
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email?.toLowerCase() ?? ""));
+    supabase.auth.getUser().then(({ data }) => {
+      const e = data.user?.email ?? "";
+      setEmail(e.toLowerCase());
+    });
   }, []);
 
-  // Load roster (RLS will restrict to this user’s pairs)
+  // Load roster (RLS will restrict)
   useEffect(() => {
     if (!email) return;
     (async () => {
@@ -80,7 +86,7 @@ export default function AppPage() {
         setStatus(error.message);
         return;
       }
-      const rows = data || [];
+      const rows = (data ?? []) as Roster[];
       setPairs(rows);
       if (rows.length && !pairId) setPairId(rows[0].pair_id);
     })();
@@ -97,30 +103,33 @@ export default function AppPage() {
         .select("*")
         .eq("pair_id", pairId)
         .eq("part_name", part)
-        .single();
-      if (error && (error as any).code !== "PGRST116") {
+        .maybeSingle(); // avoids throwing on 0 rows
+
+      if (error) {
         console.warn(error);
         setStatus(error.message);
       }
-      setData(data || null);
+      setData((data as Parts) ?? null);
     })();
   }, [pairId, part]);
 
-  // Role-based gating in the main page; passed to child components
-  const canEdit = useMemo(() => {
+  // Role-based gating
+  const canEdit = useMemo<boolean>(() => {
     const r = pairs.find((p) => p.pair_id === pairId);
     if (!r || !email) return false;
     const em = email.toLowerCase();
-    if (part === "Part1") return r.educator_email?.toLowerCase() === em;
-    if (part === "Part3") return r.resolution_email?.toLowerCase() === em;
-    if (part === "Part2" || part === "Part4") return r.evaluator_email?.toLowerCase() === em;
+    if (part === "Part1") return (r.educator_email ?? "").toLowerCase() === em;
+    if (part === "Part3") return (r.resolution_email ?? "").toLowerCase() === em;
+    if (part === "Part2" || part === "Part4") return (r.evaluator_email ?? "").toLowerCase() === em;
     return false;
   }, [pairs, pairId, part, email]);
 
   async function save(fields?: Partial<Parts>) {
     setSaving(true);
     setStatus(null);
-    const row: Parts = { pair_id: pairId, part_name: part, ...(data || {}), ...(fields || {}) };
+
+    const base: Parts = data ?? { pair_id: pairId, part_name: part };
+    const row: Parts = { ...base, ...(fields ?? {}) };
 
     const { error } = await supabase
       .from("parts")
@@ -134,16 +143,15 @@ export default function AppPage() {
       return;
     }
 
-    // Re-fetch to show the canonical (DB) state
     const res = await supabase
       .from("parts")
       .select("*")
       .eq("pair_id", pairId)
       .eq("part_name", part)
-      .single();
+      .maybeSingle();
 
     if (!res.error) {
-      setData(res.data);
+      setData((res.data as Parts) ?? null);
       setStatus("Saved");
       setTimeout(() => setStatus(null), 2000);
     } else {
@@ -202,19 +210,19 @@ export default function AppPage() {
         </div>
       )}
 
-      {/* Part I (Goals) */}
+      {/* Part I */}
       {part === "Part1" && (
         <Part1
-          value={data || { pair_id: pairId, part_name: "Part1" }}
+          value={data ?? { pair_id: pairId, part_name: "Part1" }}
           onChange={(fields) =>
-            setData((prev) => ({ ...(prev || { pair_id: pairId, part_name: "Part1" }), ...fields }))
+            setData((prev) => ({ ...(prev ?? { pair_id: pairId, part_name: "Part1" }), ...fields }))
           }
           onSave={() => save()}
           disabled={!canEdit || saving}
         />
       )}
 
-      {/* Part II – Part IV use a generic scaffold so you can iterate quickly */}
+      {/* Part II–IV */}
       {part === "Part2" && (
         <PartSection
           key="p2"
@@ -272,7 +280,7 @@ export default function AppPage() {
 /* =========================
    UI helpers
 ========================= */
-function Box({ title, children }: { title: string; children: any }) {
+function Box({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{ border: "1px solid #e5e5e5", borderRadius: 10, padding: 12, margin: "10px 0" }}>
       <div
@@ -292,71 +300,83 @@ function Box({ title, children }: { title: string; children: any }) {
     </div>
   );
 }
-function TArea(props: any) {
+
+type TAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+function TArea(props: TAreaProps) {
   return <textarea {...props} style={{ width: "100%", minHeight: 90, padding: 8 }} />;
 }
-function TInput(props: any) {
+
+type TInputProps = React.InputHTMLAttributes<HTMLInputElement>;
+function TInput(props: TInputProps) {
   return <input {...props} style={{ width: "100%", padding: 8 }} />;
 }
 
 /* =========================
    Part I (Goals)
 ========================= */
+type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
+
 function Part1({
   value,
   onChange,
   onSave,
   disabled,
 }: {
-  value: any;
-  onChange: (f: any) => void;
+  value: Part1Value;
+  onChange: (f: Partial<Parts>) => void;
   onSave: () => void;
   disabled: boolean;
 }) {
-  const G = (n: number, prefix: string) => `${prefix}${n}`;
+  const G = (n: number, prefix: string) => `${prefix}${n}` as const;
+
+  const handleText =
+    (key: keyof Parts) =>
+    (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
+      onChange({ [key]: e.target.value } as Partial<Parts>);
+
   const block = (n: number) => (
     <Box key={n} title={`Goal ${n}`}>
       <label>Goal statement</label>
       <TArea
         disabled={disabled}
-        value={value[G(n, "goal_statement")] || ""}
-        onChange={(e) => onChange({ [G(n, "goal_statement")]: e.target.value })}
+        value={(value[G(n, "goal_statement") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "goal_statement") as keyof Parts)}
       />
       <label>I chose this goal because</label>
       <TArea
         disabled={disabled}
-        value={value[G(n, "why_goal")] || ""}
-        onChange={(e) => onChange({ [G(n, "why_goal")]: e.target.value })}
+        value={(value[G(n, "why_goal") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "why_goal") as keyof Parts)}
       />
       <label>Measure/Assessment</label>
       <TInput
         disabled={disabled}
-        value={value[G(n, "measure")] || ""}
-        onChange={(e) => onChange({ [G(n, "measure")]: e.target.value })}
+        value={(value[G(n, "measure") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "measure") as keyof Parts)}
       />
       <label>I chose this Measure/Assessment because</label>
       <TArea
         disabled={disabled}
-        value={value[G(n, "why_measure")] || ""}
-        onChange={(e) => onChange({ [G(n, "why_measure")]: e.target.value })}
+        value={(value[G(n, "why_measure") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "why_measure") as keyof Parts)}
       />
       <label>My plan for monitoring progress</label>
       <TArea
         disabled={disabled}
-        value={value[G(n, "monitoring_plan")] || ""}
-        onChange={(e) => onChange({ [G(n, "monitoring_plan")]: e.target.value })}
+        value={(value[G(n, "monitoring_plan") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "monitoring_plan") as keyof Parts)}
       />
       <label>Success criteria</label>
       <TArea
         disabled={disabled}
-        value={value[G(n, "success_criteria")] || ""}
-        onChange={(e) => onChange({ [G(n, "success_criteria")]: e.target.value })}
+        value={(value[G(n, "success_criteria") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "success_criteria") as keyof Parts)}
       />
       <label>By when (Timeline)</label>
       <TInput
         disabled={disabled}
-        value={value[G(n, "timeline")] || ""}
-        onChange={(e) => onChange({ [G(n, "timeline")]: e.target.value })}
+        value={(value[G(n, "timeline") as keyof Parts] as string) ?? ""}
+        onChange={handleText(G(n, "timeline") as keyof Parts)}
       />
     </Box>
   );
@@ -406,11 +426,12 @@ function PartSection({
 }) {
   const disabled = !canEdit || saving;
 
-  const setField = (k: keyof Parts) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setRecord({
-      ...(record || { pair_id: pairId, part_name: part }),
-      [k]: e.target.value,
-    } as Parts);
+  const setField =
+    (k: keyof Parts) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const base: Parts = record ?? { pair_id: pairId, part_name: part };
+      setRecord({ ...base, [k]: e.target.value });
+    };
 
   return (
     <div>
@@ -425,13 +446,13 @@ function PartSection({
           {f.type === "textarea" ? (
             <TArea
               disabled={disabled}
-              value={(record as any)?.[f.key] || ""}
+              value={(record?.[f.key] as string) ?? ""}
               onChange={setField(f.key)}
             />
           ) : (
             <TInput
               disabled={disabled}
-              value={(record as any)?.[f.key] || ""}
+              value={(record?.[f.key] as string) ?? ""}
               onChange={setField(f.key)}
             />
           )}
@@ -455,4 +476,3 @@ function PartSection({
     </div>
   );
 }
-
