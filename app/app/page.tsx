@@ -435,23 +435,24 @@ function Part1({
 }
 
 /* =========================
-   Part II (A/B/C + 2-goal flows)
+   Part II (A/B/C + 2-goal flows, with deselectable radios)
 ========================= */
-function Radio({
+function DeselectableRadio({
   name,
   value,
-  checked,
+  current,
   onChange,
   disabled,
   label,
 }: {
   name: string;
   value: "A" | "B" | "C";
-  checked: boolean;
-  onChange: (v: "A" | "B" | "C") => void;
+  current: "A" | "B" | "C" | null;
+  onChange: (v: "A" | "B" | "C" | null) => void;
   disabled: boolean;
   label: ReactNode;
 }) {
+  const checked = current === value;
   return (
     <label style={{ display: "block", marginBottom: 8 }}>
       <input
@@ -460,7 +461,10 @@ function Radio({
         value={value}
         checked={checked}
         disabled={disabled}
-        onChange={() => onChange(value)}
+        onChange={() => onChange(value)}           // select
+        onClick={() => {
+          if (checked) onChange(null);            // deselect if clicking again
+        }}
         style={{ marginRight: 8 }}
       />
       {label}
@@ -534,61 +538,47 @@ function Part2({
   };
 
   const choice = (record.p2_choice ?? null) as "A" | "B" | "C" | null;
-  const setChoice = (v: "A" | "B" | "C") => setField("p2_choice", v);
+  const setChoice = (v: "A" | "B" | "C" | null) => setField("p2_choice", v ?? "");
 
   return (
     <div>
-      <div style={{ marginBottom: 12 }}>
-        <p>Please select one of the following three options. After our conversation, we:</p>
+      <p>Please select one of the following three options. After our conversation, we:</p>
 
-        <Radio
-          name="p2_choice"
-          value="A"
-          checked={choice === "A"}
-          onChange={setChoice}
-          disabled={disabled}
-          label={
-            <span>
-              <b>A. Agree with the goals of Part 1.</b>
-              <br />
-              <span style={{ fontWeight: 700, display: "block", marginTop: 4 }}>
-                The goal-setting process is complete.
-              </span>
-            </span>
-          }
-        />
+      {/* A */}
+      <DeselectableRadio
+        name="p2_choice"
+        value="A"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={<b>A. Agree with the goals of Part 1.</b>}
+      />
+      {choice === "A" && (
+        <p style={{ fontWeight: 700, margin: "6px 0 12px 26px" }}>
+          The goal-setting process is complete.
+        </p>
+      )}
 
-        <Radio
-          name="p2_choice"
-          value="B"
-          checked={choice === "B"}
-          onChange={setChoice}
-          disabled={disabled}
-          label={
-            <span>
-              <b>
-                B. Agree to changes to the goals of Part 1 and{" "}
-                <u>have no disagreements preventing the finalization of the goals.</u>
-              </b>
-              <br />
-              <span style={{ fontWeight: 700, display: "block", marginTop: 4 }}>Final Goals</span>
-            </span>
-          }
-        />
-
-        <Radio
-          name="p2_choice"
-          value="C"
-          checked={choice === "C"}
-          onChange={setChoice}
-          disabled={disabled}
-          label={<b>C. Do not agree on goals.</b>}
-        />
-      </div>
-
-      {/* Option B fields */}
+      {/* B */}
+      <DeselectableRadio
+        name="p2_choice"
+        value="B"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={
+          <span>
+            <b>
+              B. Agree to changes to the goals of Part 1 and{" "}
+              <u>have no disagreements preventing the finalization of the goals.</u>
+            </b>
+          </span>
+        }
+      />
+      {/* B fields appear directly under "Final Goals" (and before C) */}
       {choice === "B" && (
-        <>
+        <div style={{ marginLeft: 26 }}>
+          <div style={{ fontWeight: 700, margin: "6px 0" }}>Final Goals</div>
           <GoalBox
             n={1}
             prefix="p2_final_"
@@ -605,13 +595,22 @@ function Part2({
             disabled={disabled}
             title="Goal 2"
           />
-          <p style={{ fontWeight: 700 }}>The goal-setting process is complete.</p>
-        </>
+          <p style={{ fontWeight: 700, marginTop: 6 }}>The goal-setting process is complete.</p>
+        </div>
       )}
 
-      {/* Option C fields */}
+      {/* C */}
+      <DeselectableRadio
+        name="p2_choice"
+        value="C"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={<b>C. Do not agree on goals.</b>}
+      />
+      {/* C fields appear after the C option */}
       {choice === "C" && (
-        <>
+        <div style={{ marginLeft: 26 }}>
           <p style={{ fontWeight: 700, marginTop: 8 }}>Evaluator Proposed Goals</p>
           <GoalBox
             n={1}
@@ -639,7 +638,7 @@ function Part2({
           </Box>
 
           <p style={{ fontWeight: 700 }}>Goal-setting will proceed to the resolution process.</p>
-        </>
+        </div>
       )}
 
       <button
@@ -651,6 +650,7 @@ function Part2({
           background: disabled ? "#888" : "#111",
           color: "#fff",
           borderRadius: 8,
+          marginTop: 8,
         }}
       >
         Save
