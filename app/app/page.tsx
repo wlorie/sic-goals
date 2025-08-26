@@ -20,7 +20,7 @@ export type Parts = {
   pair_id: string;
   part_name: PartName;
 
-  // Part I
+  /* ========= Part I (current 3-goal scaffold; we'll reduce to 2 later) ========= */
   goal_statement1?: string | null;
   why_goal1?: string | null;
   measure1?: string | null;
@@ -45,15 +45,39 @@ export type Parts = {
   success_criteria3?: string | null;
   timeline3?: string | null;
 
-  // Part II (scaffold)
-  conversation_summary?: string | null;
-  key_evidence?: string | null;
+  /* ========= Part II (A/B/C + two-goal forms for B & C) ========= */
+  p2_choice?: "A" | "B" | "C" | null;
 
-  // Part III (scaffold)
+  // Option B: Final Goals (2 goals x 4 fields)
+  p2_final_goal_statement1?: string | null;
+  p2_final_measure1?: string | null;
+  p2_final_success_criteria1?: string | null;
+  p2_final_timeline1?: string | null;
+
+  p2_final_goal_statement2?: string | null;
+  p2_final_measure2?: string | null;
+  p2_final_success_criteria2?: string | null;
+  p2_final_timeline2?: string | null;
+
+  // Option C: Evaluator Proposed Goals (2 goals x 4 fields)
+  p2_proposed_goal_statement1?: string | null;
+  p2_proposed_measure1?: string | null;
+  p2_proposed_success_criteria1?: string | null;
+  p2_proposed_timeline1?: string | null;
+
+  p2_proposed_goal_statement2?: string | null;
+  p2_proposed_measure2?: string | null;
+  p2_proposed_success_criteria2?: string | null;
+  p2_proposed_timeline2?: string | null;
+
+  // Option C rationale
+  p2_rationale?: string | null;
+
+  /* ========= Part III (scaffold) ========= */
   resolution_decision?: string | null;
   resolution_rationale?: string | null;
 
-  // Part IV (scaffold)
+  /* ========= Part IV (scaffold) ========= */
   outcome_summary?: string | null;
   goal_evidence?: string | null;
 };
@@ -102,7 +126,7 @@ export default function AppPage() {
         .select("*")
         .eq("pair_id", pairId)
         .eq("part_name", part)
-        .maybeSingle(); // avoids throwing on 0 rows
+        .maybeSingle();
 
       if (error) {
         console.warn(error);
@@ -158,7 +182,7 @@ export default function AppPage() {
     }
   }
 
-  // ---- Fix: always pass a literal "Part1" to <Part1> via type guard ----
+  /* ---- Part 1 type guard to always pass literal "Part1" ---- */
   type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
   function isPart1(p: Parts | null): p is Part1Value {
     return !!p && p.part_name === "Part1";
@@ -235,24 +259,18 @@ export default function AppPage() {
         />
       )}
 
-      {/* Part II–IV */}
+      {/* Part II */}
       {part === "Part2" && (
-        <PartSection
-          key="p2"
-          pairId={pairId}
-          part="Part2"
-          record={data}
+        <Part2
+          record={data ?? { pair_id: pairId, part_name: "Part2" }}
           setRecord={setData}
           onSave={() => save()}
           canEdit={canEdit}
           saving={saving}
-          fields={[
-            { key: "conversation_summary", label: "Conversation Summary", type: "textarea" },
-            { key: "key_evidence", label: "Key Evidence Discussed", type: "textarea" },
-          ]}
         />
       )}
 
+      {/* Part III */}
       {part === "Part3" && (
         <PartSection
           key="p3"
@@ -270,6 +288,7 @@ export default function AppPage() {
         />
       )}
 
+      {/* Part IV */}
       {part === "Part4" && (
         <PartSection
           key="p4"
@@ -416,7 +435,233 @@ function Part1({
 }
 
 /* =========================
-   Generic Part Section (II–IV)
+   Part II (A/B/C + 2-goal flows)
+========================= */
+function Radio({
+  name,
+  value,
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  name: string;
+  value: "A" | "B" | "C";
+  checked: boolean;
+  onChange: (v: "A" | "B" | "C") => void;
+  disabled: boolean;
+  label: ReactNode;
+}) {
+  return (
+    <label style={{ display: "block", marginBottom: 8 }}>
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        disabled={disabled}
+        onChange={() => onChange(value)}
+        style={{ marginRight: 8 }}
+      />
+      {label}
+    </label>
+  );
+}
+
+function GoalBox({
+  n,
+  prefix,
+  record,
+  setField,
+  disabled,
+  title,
+}: {
+  n: 1 | 2;
+  prefix: "p2_final_" | "p2_proposed_";
+  record: Parts;
+  setField: (k: keyof Parts, v: string) => void;
+  disabled: boolean;
+  title: string;
+}) {
+  const f = (suffix: string) => `${prefix}${suffix}${n}` as keyof Parts;
+  return (
+    <Box title={title}>
+      <label>Goal Statement</label>
+      <TArea
+        disabled={disabled}
+        value={(record[f("goal_statement")] as string) ?? ""}
+        onChange={(e) => setField(f("goal_statement"), e.target.value)}
+      />
+      <label>Measure/Assessment</label>
+      <TInput
+        disabled={disabled}
+        value={(record[f("measure")] as string) ?? ""}
+        onChange={(e) => setField(f("measure"), e.target.value)}
+      />
+      <label>Success criteria</label>
+      <TArea
+        disabled={disabled}
+        value={(record[f("success_criteria")] as string) ?? ""}
+        onChange={(e) => setField(f("success_criteria"), e.target.value)}
+      />
+      <label>By when (Timeline)</label>
+      <TInput
+        disabled={disabled}
+        value={(record[f("timeline")] as string) ?? ""}
+        onChange={(e) => setField(f("timeline"), e.target.value)}
+      />
+    </Box>
+  );
+}
+
+function Part2({
+  record,
+  setRecord,
+  onSave,
+  canEdit,
+  saving,
+}: {
+  record: Parts;
+  setRecord: (r: Parts | null) => void;
+  onSave: () => void;
+  canEdit: boolean;
+  saving: boolean;
+}) {
+  const disabled = !canEdit || saving;
+
+  const setField = (k: keyof Parts, v: string) => {
+    setRecord({ ...(record ?? {}), [k]: v } as Parts);
+  };
+
+  const choice = (record.p2_choice ?? null) as "A" | "B" | "C" | null;
+  const setChoice = (v: "A" | "B" | "C") => setField("p2_choice", v);
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12 }}>
+        <p>Please select one of the following three options. After our conversation, we:</p>
+
+        <Radio
+          name="p2_choice"
+          value="A"
+          checked={choice === "A"}
+          onChange={setChoice}
+          disabled={disabled}
+          label={
+            <span>
+              <b>A. Agree with the goals of Part 1.</b>
+              <br />
+              <span style={{ fontWeight: 700, display: "block", marginTop: 4 }}>
+                The goal-setting process is complete.
+              </span>
+            </span>
+          }
+        />
+
+        <Radio
+          name="p2_choice"
+          value="B"
+          checked={choice === "B"}
+          onChange={setChoice}
+          disabled={disabled}
+          label={
+            <span>
+              <b>
+                B. Agree to changes to the goals of Part 1 and{" "}
+                <u>have no disagreements preventing the finalization of the goals.</u>
+              </b>
+              <br />
+              <span style={{ fontWeight: 700, display: "block", marginTop: 4 }}>Final Goals</span>
+            </span>
+          }
+        />
+
+        <Radio
+          name="p2_choice"
+          value="C"
+          checked={choice === "C"}
+          onChange={setChoice}
+          disabled={disabled}
+          label={<b>C. Do not agree on goals.</b>}
+        />
+      </div>
+
+      {/* Option B fields */}
+      {choice === "B" && (
+        <>
+          <GoalBox
+            n={1}
+            prefix="p2_final_"
+            record={record}
+            setField={setField}
+            disabled={disabled}
+            title="Goal 1"
+          />
+          <GoalBox
+            n={2}
+            prefix="p2_final_"
+            record={record}
+            setField={setField}
+            disabled={disabled}
+            title="Goal 2"
+          />
+          <p style={{ fontWeight: 700 }}>The goal-setting process is complete.</p>
+        </>
+      )}
+
+      {/* Option C fields */}
+      {choice === "C" && (
+        <>
+          <p style={{ fontWeight: 700, marginTop: 8 }}>Evaluator Proposed Goals</p>
+          <GoalBox
+            n={1}
+            prefix="p2_proposed_"
+            record={record}
+            setField={setField}
+            disabled={disabled}
+            title="Goal 1"
+          />
+          <GoalBox
+            n={2}
+            prefix="p2_proposed_"
+            record={record}
+            setField={setField}
+            disabled={disabled}
+            title="Goal 2"
+          />
+
+          <Box title="Evaluator: Please explain briefly why you support these goals:">
+            <TArea
+              disabled={disabled}
+              value={record.p2_rationale ?? ""}
+              onChange={(e) => setField("p2_rationale", e.target.value)}
+            />
+          </Box>
+
+          <p style={{ fontWeight: 700 }}>Goal-setting will proceed to the resolution process.</p>
+        </>
+      )}
+
+      <button
+        disabled={disabled}
+        onClick={onSave}
+        style={{
+          padding: "8px 12px",
+          border: "1px solid #333",
+          background: disabled ? "#888" : "#111",
+          color: "#fff",
+          borderRadius: 8,
+        }}
+      >
+        Save
+      </button>
+      {!canEdit && <p style={{ color: "#666" }}>You have view-only access to this section.</p>}
+    </div>
+  );
+}
+
+/* =========================
+   Generic Part Section (III–IV)
 ========================= */
 function PartSection({
   pairId,
@@ -489,4 +734,3 @@ function PartSection({
     </div>
   );
 }
-
