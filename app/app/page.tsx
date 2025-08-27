@@ -222,10 +222,11 @@ export default function AppPage() {
         <select value={pairId} onChange={(e) => setPairId(e.target.value)}>
           {pairs.map((p) => (
             <option key={p.pair_id} value={p.pair_id}>
-              {(p.educator_name || "Educator")} (Educator) â€”{" "}
-              {(p.evaluator_name || "Evaluator")} (Evaluator) â€”{" "}
-              {(p.resolution_name || "Resolution")} (Resolution)
-            </option>
+  {(p.educator_name || "Educator")} (Educator) {" | "}
+  {(p.evaluator_name || "Evaluator")} (Evaluator) {" | "}
+  {(p.resolution_name || "Resolution")} (Resolution)
+</option>
+
           ))}
         </select>
 
