@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
@@ -37,7 +37,7 @@ export type Parts = {
   success_criteria2?: string | null;
   timeline2?: string | null;
 
-  /* legacy Goal 3 columns may still exist in DB; UI won’t render them */
+  /* legacy Goal 3 columns may still exist in DB; UI wonâ€™t render them */
   goal_statement3?: string | null;
   why_goal3?: string | null;
   measure3?: string | null;
@@ -206,7 +206,7 @@ export default function AppPage() {
   if (!email)
     return (
       <div style={{ padding: 20, fontFamily: "system-ui" }}>
-        Checking session… <a href="/login">Login</a>
+        Checking sessionâ€¦ <a href="/login">Login</a>
       </div>
     );
 
@@ -222,8 +222,8 @@ export default function AppPage() {
         <select value={pairId} onChange={(e) => setPairId(e.target.value)}>
           {pairs.map((p) => (
             <option key={p.pair_id} value={p.pair_id}>
-              {(p.educator_name || "Educator")} (Educator) —{" "}
-              {(p.evaluator_name || "Evaluator")} (Evaluator) —{" "}
+              {(p.educator_name || "Educator")} (Educator) â€”{" "}
+              {(p.evaluator_name || "Evaluator")} (Evaluator) â€”{" "}
               {(p.resolution_name || "Resolution")} (Resolution)
             </option>
           ))}
@@ -373,7 +373,7 @@ function Part1({
   disabled: boolean;
   canEdit: boolean;
 }) {
-  const GOAL_COUNT = 2; // ← render only two goals in the UI
+  const GOAL_COUNT = 2; // â† render only two goals in the UI
 
   const G = (n: number, prefix: string) => `${prefix}${n}` as const;
 
@@ -501,7 +501,7 @@ function GoalBox({
   n: 1 | 2;
   prefix: "p2_final_" | "p2_proposed_" | "p3_final_";
   record: Parts;
-  setField: (k: keyof Parts, v: string) => void;
+  setField: (k: keyof Parts, v: string | null) => void;
   disabled: boolean;
   title: string;
 }) {
@@ -605,7 +605,7 @@ function Part2({
             n={1}
             prefix="p2_final_"
             record={record}
-            setField={setField as any}
+            setField={setField}
             disabled={disabled}
             title="Goal 1"
           />
@@ -613,7 +613,7 @@ function Part2({
             n={2}
             prefix="p2_final_"
             record={record}
-            setField={setField as any}
+            setField={setField}
             disabled={disabled}
             title="Goal 2"
           />
@@ -637,7 +637,7 @@ function Part2({
             n={1}
             prefix="p2_proposed_"
             record={record}
-            setField={setField as any}
+            setField={setField}
             disabled={disabled}
             title="Goal 1"
           />
@@ -645,7 +645,7 @@ function Part2({
             n={2}
             prefix="p2_proposed_"
             record={record}
-            setField={setField as any}
+            setField={setField}
             disabled={disabled}
             title="Goal 2"
           />
@@ -681,7 +681,7 @@ function Part2({
 }
 
 /* =========================
-   Part III (Resolution) – A/B/C + reason + final goals (always shown)
+   Part III (Resolution) â€“ A/B/C + reason + final goals (always shown)
 ========================= */
 function Part3Resolution({
   record,
@@ -723,7 +723,7 @@ function Part3Resolution({
       <p>
         Your role is to resolve the disagreement between the Educator and their Evaluator. You may
         (A) agree with the goals of Part I, including any changes agreed to by the Educator and
-        Evaluator, or (B) agree with the Evaluator’s alternative goals. Please provide reasons for
+        Evaluator, or (B) agree with the Evaluatorâ€™s alternative goals. Please provide reasons for
         your decision. If you have met with the Educator and Evaluator, and they have agreed to
         reformulated goals (Option C), you can indicate that here.
       </p>
@@ -802,7 +802,7 @@ function Part3Resolution({
         n={1}
         prefix="p3_final_"
         record={record}
-        setField={setField as any}
+        setField={setField}
         disabled={disabled}
         title="Goal 1"
       />
@@ -810,7 +810,7 @@ function Part3Resolution({
         n={2}
         prefix="p3_final_"
         record={record}
-        setField={setField as any}
+        setField={setField}
         disabled={disabled}
         title="Goal 2"
       />
@@ -902,3 +902,4 @@ function PartSection({
     </div>
   );
 }
+
