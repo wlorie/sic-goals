@@ -20,7 +20,7 @@ export type Parts = {
   pair_id: string;
   part_name: PartName;
 
-  /* ========= Part I (current 3-goal scaffold; we'll reduce to 2 later) ========= */
+  /* ========= Part I (now rendered as 2 goals in UI) ========= */
   goal_statement1?: string | null;
   why_goal1?: string | null;
   measure1?: string | null;
@@ -37,6 +37,7 @@ export type Parts = {
   success_criteria2?: string | null;
   timeline2?: string | null;
 
+  /* legacy Goal 3 columns may still exist in DB; UI won’t render them */
   goal_statement3?: string | null;
   why_goal3?: string | null;
   measure3?: string | null;
@@ -193,7 +194,7 @@ export default function AppPage() {
     }
   }
 
-  /* ---- Part 1 type guard to always pass literal "Part1" ---- */
+  /* ---- Part 1 type + guard (defined once; reused below) ---- */
   type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
   function isPart1(p: Parts | null): p is Part1Value {
     return !!p && p.part_name === "Part1";
@@ -359,8 +360,6 @@ function TInput(props: TInputProps) {
 /* =========================
    Part I (Goals)
 ========================= */
-type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
-
 function Part1({
   value,
   onChange,
@@ -368,12 +367,14 @@ function Part1({
   disabled,
   canEdit,
 }: {
-  value: Part1Value;
+  value: { pair_id: string; part_name: "Part1" } & Partial<Parts>;
   onChange: (f: Partial<Parts>) => void;
   onSave: () => void;
   disabled: boolean;
   canEdit: boolean;
 }) {
+  const GOAL_COUNT = 2; // ← render only two goals in the UI
+
   const G = (n: number, prefix: string) => `${prefix}${n}` as const;
 
   const handleText =
@@ -432,7 +433,7 @@ function Part1({
     <div>
       {!canEdit && <ReadOnlyNotice />}
 
-      {[1, 2, 3].map(block)}
+      {Array.from({ length: GOAL_COUNT }, (_, i) => i + 1).map(block)}
 
       <button
         disabled={disabled}
@@ -498,10 +499,7 @@ function GoalBox({
   title,
 }: {
   n: 1 | 2;
-  prefix:
-    | "p2_final_"
-    | "p2_proposed_"
-    | "p3_final_";
+  prefix: "p2_final_" | "p2_proposed_" | "p3_final_";
   record: Parts;
   setField: (k: keyof Parts, v: string) => void;
   disabled: boolean;
@@ -607,7 +605,7 @@ function Part2({
             n={1}
             prefix="p2_final_"
             record={record}
-            setField={setField}
+            setField={setField as any}
             disabled={disabled}
             title="Goal 1"
           />
@@ -615,7 +613,7 @@ function Part2({
             n={2}
             prefix="p2_final_"
             record={record}
-            setField={setField}
+            setField={setField as any}
             disabled={disabled}
             title="Goal 2"
           />
@@ -639,7 +637,7 @@ function Part2({
             n={1}
             prefix="p2_proposed_"
             record={record}
-            setField={setField}
+            setField={setField as any}
             disabled={disabled}
             title="Goal 1"
           />
@@ -647,7 +645,7 @@ function Part2({
             n={2}
             prefix="p2_proposed_"
             record={record}
-            setField={setField}
+            setField={setField as any}
             disabled={disabled}
             title="Goal 2"
           />
@@ -768,7 +766,7 @@ function Part3Resolution({
         }
       />
 
-      {/* Reason (appears for A/B/C per spec; we'll display unconditionally to keep it simple) */}
+      {/* Reason (kept visible for simplicity) */}
       <Box title="Reason for my decision:">
         <TArea
           disabled={disabled}
@@ -804,7 +802,7 @@ function Part3Resolution({
         n={1}
         prefix="p3_final_"
         record={record}
-        setField={setField}
+        setField={setField as any}
         disabled={disabled}
         title="Goal 1"
       />
@@ -812,7 +810,7 @@ function Part3Resolution({
         n={2}
         prefix="p3_final_"
         record={record}
-        setField={setField}
+        setField={setField as any}
         disabled={disabled}
         title="Goal 2"
       />
