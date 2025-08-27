@@ -73,9 +73,20 @@ export type Parts = {
   // Option C rationale
   p2_rationale?: string | null;
 
-  /* ========= Part III (scaffold) ========= */
-  resolution_decision?: string | null;
-  resolution_rationale?: string | null;
+  /* ========= Part III (Resolution flow) ========= */
+  p3_choice?: "A" | "B" | "C" | null;
+  p3_reason?: string | null;
+
+  // Final goals for Part 3 (always present; 2 goals x 4 fields)
+  p3_final_goal_statement1?: string | null;
+  p3_final_measure1?: string | null;
+  p3_final_success_criteria1?: string | null;
+  p3_final_timeline1?: string | null;
+
+  p3_final_goal_statement2?: string | null;
+  p3_final_measure2?: string | null;
+  p3_final_success_criteria2?: string | null;
+  p3_final_timeline2?: string | null;
 
   /* ========= Part IV (scaffold) ========= */
   outcome_summary?: string | null;
@@ -271,21 +282,14 @@ export default function AppPage() {
         />
       )}
 
-      {/* Part III */}
+      {/* Part III (Resolution) */}
       {part === "Part3" && (
-        <PartSection
-          key="p3"
-          pairId={pairId}
-          part="Part3"
-          record={data}
+        <Part3Resolution
+          record={data ?? { pair_id: pairId, part_name: "Part3" }}
           setRecord={setData}
           onSave={() => save()}
           canEdit={canEdit}
           saving={saving}
-          fields={[
-            { key: "resolution_decision", label: "Resolution Decision", type: "textarea" },
-            { key: "resolution_rationale", label: "Rationale", type: "textarea" },
-          ]}
         />
       )}
 
@@ -448,7 +452,7 @@ function Part1({
 }
 
 /* =========================
-   Part II (A/B/C + 2-goal flows, deselectable radios)
+   Shared: Deselectable radio + goal box
 ========================= */
 function DeselectableRadio({
   name,
@@ -494,7 +498,10 @@ function GoalBox({
   title,
 }: {
   n: 1 | 2;
-  prefix: "p2_final_" | "p2_proposed_";
+  prefix:
+    | "p2_final_"
+    | "p2_proposed_"
+    | "p3_final_";
   record: Parts;
   setField: (k: keyof Parts, v: string) => void;
   disabled: boolean;
@@ -531,6 +538,9 @@ function GoalBox({
   );
 }
 
+/* =========================
+   Part II (A/B/C + 2-goal flows, deselectable radios)
+========================= */
 function Part2({
   record,
   setRecord,
@@ -546,12 +556,12 @@ function Part2({
 }) {
   const disabled = !canEdit || saving;
 
-  const setField = (k: keyof Parts, v: string) => {
+  const setField = (k: keyof Parts, v: string | null) => {
     setRecord({ ...(record ?? {}), [k]: v } as Parts);
   };
 
   const choice = (record.p2_choice ?? null) as "A" | "B" | "C" | null;
-  const setChoice = (v: "A" | "B" | "C" | null) => setField("p2_choice", v ?? "");
+  const setChoice = (v: "A" | "B" | "C" | null) => setField("p2_choice", v);
 
   return (
     <div>
@@ -590,7 +600,6 @@ function Part2({
           </span>
         }
       />
-      {/* B fields directly under B (and before C) */}
       {choice === "B" && (
         <div style={{ marginLeft: 26 }}>
           <div style={{ fontWeight: 700, margin: "6px 0" }}>Final Goals</div>
@@ -623,7 +632,6 @@ function Part2({
         disabled={disabled}
         label={<b>C. Do not agree on goals.</b>}
       />
-      {/* C fields after C */}
       {choice === "C" && (
         <div style={{ marginLeft: 26 }}>
           <p style={{ fontWeight: 700, marginTop: 8 }}>Evaluator Proposed Goals</p>
@@ -675,7 +683,160 @@ function Part2({
 }
 
 /* =========================
-   Generic Part Section (III–IV)
+   Part III (Resolution) – A/B/C + reason + final goals (always shown)
+========================= */
+function Part3Resolution({
+  record,
+  setRecord,
+  onSave,
+  canEdit,
+  saving,
+}: {
+  record: Parts;
+  setRecord: (r: Parts | null) => void;
+  onSave: () => void;
+  canEdit: boolean;
+  saving: boolean;
+}) {
+  const disabled = !canEdit || saving;
+  const setField = (k: keyof Parts, v: string | null) => {
+    setRecord({ ...(record ?? {}), [k]: v } as Parts);
+  };
+
+  const choice = (record.p3_choice ?? null) as "A" | "B" | "C" | null;
+  const setChoice = (v: "A" | "B" | "C" | null) => setField("p3_choice", v);
+
+  return (
+    <div>
+      {!canEdit && <ReadOnlyNotice />}
+
+      <p>
+        Please review Parts 1 and 2 and the{" "}
+        <a
+          href="https://drive.google.com/file/d/1SzKk2RMNgtvm_lWXHJiXjlZ1_qocQT39/view"
+          target="_blank"
+          rel="noreferrer"
+        >
+          SIC goal-setting resolution and process and guidelines
+        </a>
+        .
+      </p>
+
+      <p>
+        Your role is to resolve the disagreement between the Educator and their Evaluator. You may
+        (A) agree with the goals of Part I, including any changes agreed to by the Educator and
+        Evaluator, or (B) agree with the Evaluator’s alternative goals. Please provide reasons for
+        your decision. If you have met with the Educator and Evaluator, and they have agreed to
+        reformulated goals (Option C), you can indicate that here.
+      </p>
+
+      <p>Please write the final goals here, regardless of the option selected.</p>
+
+      <hr style={{ margin: "12px 0" }} />
+
+      <p>Upon reviewing the relevant documentation and the goal-setting resolution process and guidelines, I:</p>
+
+      {/* A */}
+      <DeselectableRadio
+        name="p3_choice"
+        value="A"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={
+          <span>
+            <b>
+              (A) Support the goals of Part 1 and (if applicable) any agreed-upon revision to those.
+            </b>{" "}
+            Please write the final goals in the goal boxes below.
+          </span>
+        }
+      />
+
+      {/* B */}
+      <DeselectableRadio
+        name="p3_choice"
+        value="B"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={
+          <span>
+            <b>(B) Support the alternative goals proposed by the Evaluator.</b> Please write the
+            final goals in the goal boxes below.
+          </span>
+        }
+      />
+
+      {/* Reason (appears for A/B/C per spec; we'll display unconditionally to keep it simple) */}
+      <Box title="Reason for my decision:">
+        <TArea
+          disabled={disabled}
+          value={record.p3_reason ?? ""}
+          onChange={(e) => setField("p3_reason", e.target.value)}
+        />
+      </Box>
+
+      {/* C */}
+      <DeselectableRadio
+        name="p3_choice"
+        value="C"
+        current={choice}
+        onChange={setChoice}
+        disabled={disabled}
+        label={
+          <span>
+            <b>
+              (C) Have met with the Educator and Evaluator, and they have agreed to reformulated
+              goals.
+            </b>{" "}
+            Please write the final goals in the goal boxes below.
+          </span>
+        }
+      />
+
+      <hr style={{ margin: "12px 0" }} />
+
+      <p style={{ fontWeight: 700, marginBottom: 6 }}>The following are final goals for Part 3.</p>
+
+      {/* Final Goals (always shown) */}
+      <GoalBox
+        n={1}
+        prefix="p3_final_"
+        record={record}
+        setField={setField}
+        disabled={disabled}
+        title="Goal 1"
+      />
+      <GoalBox
+        n={2}
+        prefix="p3_final_"
+        record={record}
+        setField={setField}
+        disabled={disabled}
+        title="Goal 2"
+      />
+
+      <button
+        disabled={disabled}
+        onClick={onSave}
+        style={{
+          padding: "8px 12px",
+          border: "1px solid #333",
+          background: disabled ? "#888" : "#111",
+          color: "#fff",
+          borderRadius: 8,
+          marginTop: 8,
+        }}
+      >
+        Save
+      </button>
+    </div>
+  );
+}
+
+/* =========================
+   Generic Part Section (IV)
 ========================= */
 function PartSection({
   pairId,
