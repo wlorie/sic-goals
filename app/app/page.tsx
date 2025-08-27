@@ -256,6 +256,7 @@ export default function AppPage() {
           }
           onSave={() => save()}
           disabled={!canEdit || saving}
+          canEdit={canEdit}
         />
       )}
 
@@ -333,6 +334,14 @@ function Box({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+function ReadOnlyNotice() {
+  return (
+    <div style={{ padding: 8, margin: "8px 0", border: "1px solid #eee", borderRadius: 8 }}>
+      Read-only view
+    </div>
+  );
+}
+
 type TAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 function TArea(props: TAreaProps) {
   return <textarea {...props} style={{ width: "100%", minHeight: 90, padding: 8 }} />;
@@ -353,11 +362,13 @@ function Part1({
   onChange,
   onSave,
   disabled,
+  canEdit,
 }: {
   value: Part1Value;
   onChange: (f: Partial<Parts>) => void;
   onSave: () => void;
   disabled: boolean;
+  canEdit: boolean;
 }) {
   const G = (n: number, prefix: string) => `${prefix}${n}` as const;
 
@@ -415,7 +426,10 @@ function Part1({
 
   return (
     <div>
+      {!canEdit && <ReadOnlyNotice />}
+
       {[1, 2, 3].map(block)}
+
       <button
         disabled={disabled}
         onClick={onSave}
@@ -429,13 +443,12 @@ function Part1({
       >
         Save
       </button>
-      {disabled && <p style={{ color: "#666" }}>You have view-only access to this section.</p>}
     </div>
   );
 }
 
 /* =========================
-   Part II (A/B/C + 2-goal flows, with deselectable radios)
+   Part II (A/B/C + 2-goal flows, deselectable radios)
 ========================= */
 function DeselectableRadio({
   name,
@@ -461,9 +474,9 @@ function DeselectableRadio({
         value={value}
         checked={checked}
         disabled={disabled}
-        onChange={() => onChange(value)}           // select
+        onChange={() => onChange(value)}
         onClick={() => {
-          if (checked) onChange(null);            // deselect if clicking again
+          if (checked) onChange(null);
         }}
         style={{ marginRight: 8 }}
       />
@@ -542,6 +555,8 @@ function Part2({
 
   return (
     <div>
+      {!canEdit && <ReadOnlyNotice />}
+
       <p>Please select one of the following three options. After our conversation, we:</p>
 
       {/* A */}
@@ -575,7 +590,7 @@ function Part2({
           </span>
         }
       />
-      {/* B fields appear directly under "Final Goals" (and before C) */}
+      {/* B fields directly under B (and before C) */}
       {choice === "B" && (
         <div style={{ marginLeft: 26 }}>
           <div style={{ fontWeight: 700, margin: "6px 0" }}>Final Goals</div>
@@ -608,7 +623,7 @@ function Part2({
         disabled={disabled}
         label={<b>C. Do not agree on goals.</b>}
       />
-      {/* C fields appear after the C option */}
+      {/* C fields after C */}
       {choice === "C" && (
         <div style={{ marginLeft: 26 }}>
           <p style={{ fontWeight: 700, marginTop: 8 }}>Evaluator Proposed Goals</p>
@@ -655,7 +670,6 @@ function Part2({
       >
         Save
       </button>
-      {!canEdit && <p style={{ color: "#666" }}>You have view-only access to this section.</p>}
     </div>
   );
 }
@@ -693,11 +707,7 @@ function PartSection({
 
   return (
     <div>
-      {!canEdit && (
-        <div style={{ padding: 8, margin: "8px 0", border: "1px solid #eee", borderRadius: 8 }}>
-          Read-only view
-        </div>
-      )}
+      {!canEdit && <ReadOnlyNotice />}
 
       {fields.map((f) => (
         <Box key={String(f.key)} title={f.label}>
@@ -730,7 +740,6 @@ function PartSection({
       >
         Save
       </button>
-      {disabled && <p style={{ color: "#666" }}>You have view-only access to this section.</p>}
     </div>
   );
 }
