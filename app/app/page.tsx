@@ -1002,7 +1002,7 @@ function Part4Section({
       {!canEdit && <ReadOnlyNotice />}
 
       <Box title="Instructions">
-        <p style={{ marginBottom: "16px" }}>Please complete this part at the end of the evaluation period.</p>
+        <p style={{ marginBottom: "16px" }}><b>Evaluator</b>: Please complete this part at the end of the evaluation period.</p>
         
         <p style={{ marginBottom: "16px" }}>
           For each goal, please insert the final goal statement (from Part 2). If the goal has changed during the review period, then write the new,
