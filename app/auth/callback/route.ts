@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   // -- NEW: read the code from the query string and exchange it
   const code = url.searchParams.get("code");
   if (code) {
-    await supabase.auth.exchangeCodeForSession({ code });
+    await supabase.auth.exchangeCodeForSession(code);
   }
   // If there's no code (someone hit this URL manually), just redirect to /app
 
