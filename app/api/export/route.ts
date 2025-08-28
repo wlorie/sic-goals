@@ -3,6 +3,22 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
+type CookieOptions = {
+  domain?: string;
+  path?: string;
+  expires?: Date;
+  httpOnly?: boolean;
+  sameSite?: "lax" | "strict" | "none";
+  secure?: boolean;
+  maxAge?: number;
+};
+
+function esc(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export async function GET() {
   const cookieStore = cookies();
 
@@ -14,11 +30,11 @@ export async function GET() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
+        set(name: string, value: string, options?: CookieOptions) {
+          cookieStore.set({ name, value, ...(options ?? {}) });
         },
-        remove(name: string, options: any) {
-          cookieStore.set({ name, value: "", ...options, expires: new Date(0) });
+        remove(name: string, options?: CookieOptions) {
+          cookieStore.set({ name, value: "", ...(options ?? {}), expires: new Date(0) });
         },
       },
     }
@@ -26,26 +42,19 @@ export async function GET() {
 
   // Require login
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   // Require admin
   const { data: isAdmin, error: adminErr } = await supabase.rpc("is_admin");
-  if (adminErr || !isAdmin) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-  }
+  if (adminErr || !isAdmin) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
-  // Pull from view (or use 'parts' + 'roster' join if you didn't create the view)
+  // Query
   const { data, error } = await supabase.from("parts_export").select("*");
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const cols = data.length ? Object.keys(data[0]) : [];
-  const esc = (v: any) =>
-    v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
-  const csv = [cols.join(","), ...data.map((r) => cols.map((c) => esc((r as any)[c])).join(","))].join("\n");
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  const csv = [cols.join(","), ...rows.map(r => cols.map(c => esc(r[c])).join(","))].join("\n");
 
   return new NextResponse(csv, {
     headers: {
@@ -54,4 +63,3 @@ export async function GET() {
     },
   });
 }
-
