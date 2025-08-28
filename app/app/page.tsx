@@ -878,10 +878,10 @@ function Part4GoalBox({
 }) {
   const s = (suffix: string) => `p4_goal_${suffix}${n}` as keyof Parts;
 
- return (
+return (
   <Box title={`Goal ${n}`}>
     <div style={{ display: "grid", gap: 12 }}>
-      {/* Goal statement */}
+      {/* Goal statement (full row) */}
       <div>
         <label>Goal Statement</label>
         <TArea
@@ -891,14 +891,16 @@ function Part4GoalBox({
         />
       </div>
 
-      {/* Revised? */}
-      <div>
-        <label>Was this goal revised (from Part 2 or 3) during the review period?</label>
+      {/* Revised? (inline label + select) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <label style={{ margin: 0 }}>
+          Was this goal revised (from Part 2 or 3) during the review period?
+        </label>
         <select
           disabled={disabled}
           value={(record[s("revised")] as string) ?? ""}
           onChange={(e) => setField(s("revised"), e.target.value)}
-          style={{ width: "100%", padding: 6 }}
+          style={{ padding: 6 }}
         >
           <option value="">-- select --</option>
           <option value="yes">Yes</option>
@@ -906,14 +908,14 @@ function Part4GoalBox({
         </select>
       </div>
 
-      {/* Met status — on its own row */}
-      <div>
-        <label>This goal was</label>
+      {/* Met status (inline label + select) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <label style={{ margin: 0 }}>This goal was</label>
         <select
           disabled={disabled}
           value={(record[s("met")] as string) ?? ""}
           onChange={(e) => setField(s("met"), e.target.value)}
-          style={{ width: "100%", padding: 6 }}
+          style={{ padding: 6 }}
         >
           <option value="">-- select --</option>
           <option value="met">Met</option>
@@ -922,7 +924,7 @@ function Part4GoalBox({
         </select>
       </div>
 
-      {/* Comment — on its own row */}
+      {/* Comment (full row) */}
       <div>
         <label>Please comment</label>
         <TArea
@@ -934,5 +936,6 @@ function Part4GoalBox({
     </div>
   </Box>
 );
+
 
 }
