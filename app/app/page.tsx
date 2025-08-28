@@ -796,7 +796,7 @@ function Part3Resolution({
   <b>Complete Part 3 ONLY if educator and evaluator do not agree on goals after  
   their Part 2 conversation.</b>
 </p>
-<Box title="Instructions:">
+<Box title="Instructions">
 <p style={{ marginBottom: "16px" }}>
  <b>Resolution staff member:</b> Please review Parts 1 and 2 and the{" "}
   <a
@@ -819,7 +819,7 @@ function Part3Resolution({
 
       <p>Please write the final goals here, regardless of the option selected.</p>
 </Box>
-      <hr style={{ margin: "12px 0" }} />
+      
 
       <p>Upon reviewing the relevant documentation and the goal-setting resolution process and guidelines, I:</p>
 
@@ -1002,14 +1002,14 @@ function Part4Section({
       {!canEdit && <ReadOnlyNotice />}
 
       <Box title="Instructions">
-        <p>Please complete this part at the end of the evaluation period.</p>
-        <hr style={{ margin: "12px 0" }} />
-        <p>
+        <p style={{ marginBottom: "16px" }}>Please complete this part at the end of the evaluation period.</p>
+        
+        <p style={{ marginBottom: "16px" }}>
           For each goal, please insert the final goal statement (from Part 2). If the goal has changed during the review period, then write the new,
           revised goal. Then, indicate whether the goal has been met, not met, or partially met. Please comment on why or how the goal was met, not met,
           or partially met.
         </p>
-        <hr style={{ margin: "12px 0" }} />
+       
       </Box>
 
       <Part4Goal idx={1} record={ensurePart(base)} setRecord={(r) => setRecord(ensurePart(r as Parts))} disabled={disabled} />
