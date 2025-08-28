@@ -249,18 +249,7 @@ export default function AppPage() {
     }
   }
 
-  // Debounced autosave on edits (only when user can edit and data changed)
-  useEffect(() => {
-    if (!canEdit) return;
-    if (!data) return;
-    const h = setTimeout(() => {
-      if (!lastSaved || !shallowEqual(data, lastSaved)) {
-        void save();
-      }
-    }, 800);
-    return () => clearTimeout(h);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, canEdit, pairId, part]);
+  
 
   /* Part 1 type guard to always pass literal "Part1" */
   type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
@@ -446,9 +435,10 @@ function Part1({
 </p>
 <TArea
   disabled={disabled}
-  value={(value[G(n, "goal_statement") as keyof Parts] as string) ?? ""}
-  onChange={handleText(G(n, "goal_statement") as keyof Parts)}
+  value={(value[G(n, "timeline") as keyof Parts] as string) ?? ""}
+  onChange={handleText(G(n, "timeline") as keyof Parts)}
 />
+
 
     </Box>
   );
@@ -911,7 +901,7 @@ function Part4Goal({
   setRecord: (r: Parts | null) => void;
   disabled: boolean;
 }) {
-  const s = (key: "goal_statement" | "revised" | "met" | "comment") =>
+  const s = (key: "goal_statement" | "revised" | "status" | "comment") =>
     (`p4_${key}${idx}` as keyof Parts);
 
   const setField = (k: keyof Parts, v: string | null) =>
@@ -950,8 +940,8 @@ function Part4Goal({
         <select
           id={`met-${idx}`}
           disabled={disabled}
-          value={(record[s("met")] as string) ?? ""}
-          onChange={(e) => setField(s("met"), e.target.value)}
+          value={(record[s("status")] as string) ?? ""}
+          onChange={(e) => setField(s("status"), e.target.value)}
           style={{ padding: 6 }}
         >
           <option value="">-- select --</option>
