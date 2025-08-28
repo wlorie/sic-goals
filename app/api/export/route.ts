@@ -1,13 +1,27 @@
 // app/api/export/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  const supabase = createRouteHandlerClient(
+  const cookieStore = cookies();
+
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies }
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: "", ...options, expires: new Date(0) });
+        },
+      },
+    }
   );
 
   // Require login
@@ -22,20 +36,16 @@ export async function GET() {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  // Pull from the view if you created `parts_export`.
-  // If you haven't created it yet, let me know and I’ll paste that SQL again.
+  // Pull from view (or use 'parts' + 'roster' join if you didn't create the view)
   const { data, error } = await supabase.from("parts_export").select("*");
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   const cols = data.length ? Object.keys(data[0]) : [];
-  const esc = (v: any) => {
-    if (v === null || v === undefined) return "";
-    const s = String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-  const csv = [cols.join(","), ...data.map(row => cols.map(c => esc((row as any)[c])).join(","))].join("\n");
+  const esc = (v: any) =>
+    v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  const csv = [cols.join(","), ...data.map((r) => cols.map((c) => esc((r as any)[c])).join(","))].join("\n");
 
   return new NextResponse(csv, {
     headers: {
@@ -44,3 +54,4 @@ export async function GET() {
     },
   });
 }
+

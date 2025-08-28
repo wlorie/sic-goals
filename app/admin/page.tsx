@@ -4,21 +4,32 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 
 export default async function AdminPage() {
+  const cookieStore = cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies }
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: "", ...options, expires: new Date(0) });
+        },
+      },
+    }
   );
 
-  // Require login
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Require admin
-  const { data: isAdmin, error: adminErr } = await supabase.rpc("is_admin");
-  if (adminErr || !isAdmin) redirect("/app");
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  if (!isAdmin) redirect("/app");
 
-  // (Optional) You can fetch summary stats here if you want.
   return (
     <main style={{ padding: 20, fontFamily: "system-ui", maxWidth: 900, margin: "0 auto" }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Admin</h1>
@@ -43,3 +54,4 @@ export default async function AdminPage() {
     </main>
   );
 }
+
