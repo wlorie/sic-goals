@@ -878,44 +878,61 @@ function Part4GoalBox({
 }) {
   const s = (suffix: string) => `p4_goal_${suffix}${n}` as keyof Parts;
 
-  return (
-    <Box title={`Goal ${n}`}>
-      <label>{`Goal ${n} Statement`}</label>
-      <TArea
-        disabled={disabled}
-        value={(record[s("statement")] as string) ?? ""}
-        onChange={(e) => setField(s("statement"), e.target.value)}
-      />
+ return (
+  <Box title={`Goal ${n}`}>
+    <div style={{ display: "grid", gap: 12 }}>
+      {/* Goal statement */}
+      <div>
+        <label>Goal Statement</label>
+        <TArea
+          disabled={disabled}
+          value={(record[s("statement")] as string) ?? ""}
+          onChange={(e) => setField(s("statement"), e.target.value)}
+        />
+      </div>
 
-      <label>Was this goal revised (from Part 2 or 3) during the review period?</label>
-      <select
-        disabled={disabled}
-        value={(record[s("revised")] as string) ?? ""}
-        onChange={(e) => setField(s("revised"), e.target.value)}
-      >
-        <option value="">-- select --</option>
-        <option value="yes">Yes</option>
-        <option value="no">No</option>
-      </select>
+      {/* Revised? */}
+      <div>
+        <label>Was this goal revised (from Part 2 or 3) during the review period?</label>
+        <select
+          disabled={disabled}
+          value={(record[s("revised")] as string) ?? ""}
+          onChange={(e) => setField(s("revised"), e.target.value)}
+          style={{ width: "100%", padding: 6 }}
+        >
+          <option value="">-- select --</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
 
-      <label>This goal was</label>
-      <select
-        disabled={disabled}
-        value={(record[s("met")] as string) ?? ""}
-        onChange={(e) => setField(s("met"), e.target.value)}
-      >
-        <option value="">-- select --</option>
-        <option value="met">Met</option>
-        <option value="not met">Not met</option>
-        <option value="partially met">Partially met</option>
-      </select>
+      {/* Met status — on its own row */}
+      <div>
+        <label>This goal was</label>
+        <select
+          disabled={disabled}
+          value={(record[s("met")] as string) ?? ""}
+          onChange={(e) => setField(s("met"), e.target.value)}
+          style={{ width: "100%", padding: 6 }}
+        >
+          <option value="">-- select --</option>
+          <option value="met">Met</option>
+          <option value="not met">Not met</option>
+          <option value="partially met">Partially met</option>
+        </select>
+      </div>
 
-      <label>Please comment</label>
-      <TArea
-        disabled={disabled}
-        value={(record[s("comment")] as string) ?? ""}
-        onChange={(e) => setField(s("comment"), e.target.value)}
-      />
-    </Box>
-  );
+      {/* Comment — on its own row */}
+      <div>
+        <label>Please comment</label>
+        <TArea
+          disabled={disabled}
+          value={(record[s("comment")] as string) ?? ""}
+          onChange={(e) => setField(s("comment"), e.target.value)}
+        />
+      </div>
+    </div>
+  </Box>
+);
+
 }
