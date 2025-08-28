@@ -743,7 +743,7 @@ function Part3Resolution({
       <p>
         Your role is to resolve the disagreement between the Educator and their Evaluator. You may
         (A) agree with the goals of Part 1, including any changes agreed to by the Educator and
-        Evaluator, or (B) agree with the Evaluator's alternative goals. Please provide reasons for
+        Evaluator, or (B) agree with the Evaluator`&apos;`s alternative goals. Please provide reasons for
         your decision. If you have met with the Educator and Evaluator, and they have agreed to
         reformulated goals (Option C), you can indicate that here.
       </p>
