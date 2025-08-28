@@ -676,6 +676,14 @@ function Part2({
     <div>
       {!canEdit && <ReadOnlyNotice />}
 
+       <Box title="Instructions">
+      <p style={{ marginBottom: "16px" }}>
+        <b>Evaluator:</b> Please complete this Part at after your Educator-Evaluator conversation.
+      </p>
+     
+      
+    </Box>
+
       <p>Please select one of the following three options. After our conversation, we:</p>
 
       <DeselectableRadio
