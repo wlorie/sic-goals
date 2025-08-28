@@ -19,9 +19,7 @@ export default function LoginPage() {
       email,
       options: {
         emailRedirectTo:
-          typeof window !== "undefined"
-            ? `${window.location.origin}/app`
-            : undefined,
+   `${process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "")}/auth/callback`,
       },
     });
 
