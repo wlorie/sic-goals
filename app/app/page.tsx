@@ -126,6 +126,59 @@ function TInput(props: TInputProps) {
   return <input {...props} style={{ width: "100%", padding: 8 }} />;
 }
 
+
+function NextStep({ role, children }: { role: string; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        padding: 12,
+        borderRadius: 8,
+        border: "1px dashed #cbd5e1",
+        background: "#f8fafc",
+        color: "#0f172a",
+      }}
+    >
+      <b>{role}:</b> <span style={{ lineHeight: 1.5 }}>{children}</span>
+    </div>
+  );
+}
+
+
+/* =========================
+   Admin Link (optional)
+========================= */
+
+
+function AdminLink() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user) return;
+      const { data } = await supabase.rpc("is_admin");
+      setShow(!!data);
+    })();
+  }, []);
+
+  if (!show) return null;
+  return (
+    <a
+      href="/admin"
+      style={{
+        marginLeft: 16,
+        textDecoration: "underline",
+        color: "#0645AD",
+      }}
+    >
+      Admin
+    </a>
+  );
+}
+
+
+
 /* ========== Small helpers ========== */
 
 function shallowEqual<T extends object>(a: T | null, b: T | null) {
@@ -268,9 +321,13 @@ export default function AppPage() {
   return (
     <main style={{ maxWidth: 1000, margin: "20px auto", fontFamily: "system-ui" }}>
       <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-        <div><b>Pilot Data Entry</b></div>
-        <div>{email}</div>
-      </header>
+  <div><b>SIC Goals Portal</b></div>
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    {email}
+    <AdminLink />
+  </div>
+</header>
+
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
         <label>Pair</label>
@@ -560,6 +617,11 @@ function Part1({
     >
       Save
     </button>
+<NextStep role="Educator">
+  Saving this form only saves your data — it does not inform your Evaluator. When you have finished entering all your data in Part 1, inform your Evaluator. The next step in the process is to schedule your Educator—Evaluator conversation.
+</NextStep>
+
+
   </div>
 );
 
@@ -763,6 +825,12 @@ function Part2({
       >
         Save
       </button>
+<NextStep role="Evaluator">
+  Saving this form only saves your data — it does not inform the Educator or Resolution staff member. 
+  After finishing Part 2, inform your Educator. If you selected “C”, notify in addition the Resolution staff member to begin Part 3.
+</NextStep>
+
+
     </div>
   );
 }
@@ -890,6 +958,11 @@ function Part3Resolution({
       >
         Save
       </button>
+<NextStep role="Resolution Staff">
+  Saving this form only saves your data — it does not inform the Educator or Evaluator. After finishing Part 3, inform both the Educator and Evaluator.
+</NextStep>
+
+
     </div>
   );
 }
@@ -1002,7 +1075,7 @@ function Part4Section({
       {!canEdit && <ReadOnlyNotice />}
 
       <Box title="Instructions">
-        <p style={{ marginBottom: "16px" }}><b>Evaluator</b>: Please complete this part at the end of the evaluation period.</p>
+        <p style={{ marginBottom: "16px" }}><b>Evaluator:</b> Please complete this part at the end of the evaluation period.</p>
         
         <p style={{ marginBottom: "16px" }}>
           For each goal, please insert the final goal statement (from Part 2). If the goal has changed during the review period, then write the new,
@@ -1028,6 +1101,12 @@ function Part4Section({
       >
         Save
       </button>
+
+<NextStep role="Evaluator">
+  Saving this form only saves your data — it does not inform the Educator. After finishing Part 4, inform the Educator that the end-of-year outcomes have been recorded.
+</NextStep>
+
+
     </div>
   );
 }
