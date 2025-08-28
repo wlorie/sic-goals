@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 
 export default async function AdminPage() {
-  const cookieStore = cookies();
+  // 👇 Next 15: cookies() is async here
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,4 +54,3 @@ export default async function AdminPage() {
     </main>
   );
 }
-
