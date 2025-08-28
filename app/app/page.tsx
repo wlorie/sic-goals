@@ -48,6 +48,11 @@ export type Parts = {
   success_criteria3?: string | null;
   timeline3?: string | null;
 
+    /* ========= Part I (Alignment fields) ========= */
+  alignment_toa?: string | null;            // Alignment with the SIC Theory of Action (ToA)
+  alignment_dpas_dtgss?: string | null;     // Alignment with DPAS/DTGSS/Standards of Practice
+
+
   /* Part 2 (A/B/C + Final/Proposed Goals) */
   p2_choice?: "A" | "B" | "C" | null;
   p2_final_goal_statement1?: string | null;
@@ -442,12 +447,17 @@ function Part1({
 
   const block = (n: number) => (
     <Box key={n} title={`Goal ${n}`}>
-      <label>Goal statement</label>
-      <TArea
-        disabled={disabled}
-        value={(value[G(n, "goal_statement") as keyof Parts] as string) ?? ""}
-        onChange={handleText(G(n, "goal_statement") as keyof Parts)}
-      />
+<label>Goal statement</label>
+<p style={{ fontStyle: "italic", margin: "4px 0 8px 0" }}>
+  Please be as specific as possible. Consider, for example, sources for your goals,
+  goals you have set in the past, and alignment to building-level goals.
+</p>
+<TArea
+  disabled={disabled}
+  value={(value[G(n, "goal_statement") as keyof Parts] as string) ?? ""}
+  onChange={handleText(G(n, "goal_statement") as keyof Parts)}
+/>
+
       <label>I chose this goal because</label>
       <TArea
         disabled={disabled}
@@ -478,34 +488,139 @@ function Part1({
         value={(value[G(n, "success_criteria") as keyof Parts] as string) ?? ""}
         onChange={handleText(G(n, "success_criteria") as keyof Parts)}
       />
-      <label>By when (Timeline)</label>
-      <TInput
-        disabled={disabled}
-        value={(value[G(n, "timeline") as keyof Parts] as string) ?? ""}
-        onChange={handleText(G(n, "timeline") as keyof Parts)}
-      />
+<label>By when (Timeline)</label>
+<p style={{ fontStyle: "italic", margin: "4px 0 8px 0" }}>
+  SIC goals are typically long-term - that is, a half-year or longer.
+</p>
+<TArea
+  disabled={disabled}
+  value={(value[G(n, "goal_statement") as keyof Parts] as string) ?? ""}
+  onChange={handleText(G(n, "goal_statement") as keyof Parts)}
+/>
+
     </Box>
   );
 
   return (
-    <div>
-      {!canEdit && <ReadOnlyNotice />}
-      {Array.from({ length: GOAL_COUNT }, (_, i) => i + 1).map(block)}
-      <button
-        disabled={disabled}
-        onClick={onSave}
-        style={{
-          padding: "8px 12px",
-          border: "1px solid #333",
-          background: disabled ? "#888" : "#111",
-          color: "#fff",
-          borderRadius: 8,
-        }}
-      >
-        Save
-      </button>
-    </div>
-  );
+  <div>
+    {!canEdit && <ReadOnlyNotice />}
+
+    <Box title="Instructions">
+      <p style={{ marginBottom: "16px" }}>
+        <b>Educator:</b> Please complete this Part at the beginning of the evaluation period.
+      </p>
+      <p style={{ marginBottom: "16px" }}>
+        Write your student improvement component goals for the year.
+      </p>
+      <p style={{ marginBottom: "16px" }}>
+        <b>Resources:</b> What makes a good goal statement? See
+        {" "}
+  <a
+    href="https://drive.google.com/file/d/1lADZ_CvCFqPF_QtQAat0UNkGsECAE9hf/view"
+    target="_blank"
+    rel="noreferrer"
+    style={{ color: "#0645AD", textDecoration: "underline" }}
+  >
+    Quality Criteria for Goals
+  </a> 
+        &nbsp;and {" "}
+  <a
+    href="https://drive.google.com/file/d/1jbEJoxwQ0RhK9rU-wDXqzr5HuUaYLs_5/view"
+    target="_blank"
+    rel="noreferrer"
+    style={{ color: "#0645AD", textDecoration: "underline" }}
+  >
+    Sample Goal Statements
+  </a>.
+      </p>
+    </Box>
+
+    {Array.from({ length: GOAL_COUNT }, (_, i) => i + 1).map(block)}
+
+{/* Alignment Box */}
+    <Box title="Alignment">
+      <div style={{ marginBottom: "16px" }}>
+        <p>
+          <b>Alignment with the SIC Theory of Action (ToA):</b> How do your goals reflect
+          the connection between your practices and the valued student outcomes shown in
+          the SIC ToA?{" "}
+          <b>Link:</b>{" "}
+          <a
+            href="https://drive.google.com/file/d/1_miVhxGwuKmck_Luo-bkTx2u29N7hNP6/view"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#0645AD", textDecoration: "underline" }}
+          >
+            The SIC Theory of Action
+          </a>
+        </p>
+        <TArea
+          disabled={disabled}
+          value={value["alignment_toa"] ?? ""}
+          onChange={(e) => onChange({ alignment_toa: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <p>
+          <b>Alignment with DPAS, DTGSS, and Standards of Practice:</b> Your goals should
+          link to the DPAS or DTGSS rubrics (if you are a teacher, specialist, or
+          administrator) and (for specialists) to the standards of
+          practice for your specialty area. 
+          For DPAS and DTGSS, each goal should be linked at level 3 or 4 for an
+          indicator (teachers), criterion (specialists), or component (administrators).{" "}
+          <b>Links:</b>{" "}
+          <a
+            href="https://education.delaware.gov/wp-content/uploads/2023/07/Delaware-Teacher-Classroom-Observation-Framework-2022-2023-Updated-June-16-2023.pdf"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#0645AD", textDecoration: "underline" }}
+          >
+            DTGSS Classroom Observation Framework
+          </a>
+          {", "}
+          <a
+            href="https://education.delaware.gov/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#0645AD", textDecoration: "underline" }}
+          >
+            DPAS II Component Rubric for Specialists
+          </a>
+          {", "}
+          <a
+            href="https://education.delaware.gov/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#0645AD", textDecoration: "underline" }}
+          >
+            DPAS Guides for Administrators – Rubric
+          </a>
+        </p>
+        <TArea
+          disabled={disabled}
+          value={value["alignment_dpas_dtgss"] ?? ""}
+          onChange={(e) => onChange({ alignment_dpas_dtgss: e.target.value })}
+        />
+      </div>
+    </Box>
+
+    <button
+      disabled={disabled}
+      onClick={onSave}
+      style={{
+        padding: "8px 12px",
+        border: "1px solid #333",
+        background: disabled ? "#888" : "#111",
+        color: "#fff",
+        borderRadius: 8,
+      }}
+    >
+      Save
+    </button>
+  </div>
+);
+
 }
 
 /* =========================
@@ -727,29 +842,33 @@ function Part3Resolution({
   return (
     <div>
       {!canEdit && <ReadOnlyNotice />}
+<p style={{ marginBottom: "16px" }}>
+  <b>Complete Part 3 ONLY if educator and evaluator do not agree on goals after  
+  their Part 2 conversation.</b>
+</p>
+<Box title="Instructions:">
+<p style={{ marginBottom: "16px" }}>
+ <b>Resolution staff member:</b> Please review Parts 1 and 2 and the{" "}
+  <a
+    href="https://drive.google.com/file/d/1SzKk2RMNgtvm_lWXHJiXjlZ1_qocQT39/view"
+    target="_blank"
+    rel="noreferrer"
+    style={{ color: "#0645AD", textDecoration: "underline" }}
+  >
+    SIC goal-setting resolution and process and guidelines
+  </a>.
+</p>
 
-      <p>
-        Please review Parts 1 and 2 and the{" "}
-        <a
-          href="https://drive.google.com/file/d/1SzKk2RMNgtvm_lWXHJiXjlZ1_qocQT39/view"
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: "#0645AD", textDecoration: "underline" }}
-        >
-          SIC goal-setting resolution and process and guidelines
-        </a>.
-      </p>
-
-      <p>
+      <p style={{ marginBottom: "16px" }}>
         Your role is to resolve the disagreement between the Educator and their Evaluator. You may
         (A) agree with the goals of Part 1, including any changes agreed to by the Educator and
-        Evaluator, or (B) agree with the Evaluator`&apos;`s alternative goals. Please provide reasons for
+        Evaluator, or (B) agree with the Evaluator&apos;s alternative goals. Please provide reasons for
         your decision. If you have met with the Educator and Evaluator, and they have agreed to
         reformulated goals (Option C), you can indicate that here.
       </p>
 
       <p>Please write the final goals here, regardless of the option selected.</p>
-
+</Box>
       <hr style={{ margin: "12px 0" }} />
 
       <p>Upon reviewing the relevant documentation and the goal-setting resolution process and guidelines, I:</p>
