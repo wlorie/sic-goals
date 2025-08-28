@@ -1,3 +1,4 @@
+// app/auth/callback/route.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
@@ -22,8 +23,12 @@ export async function GET(req: NextRequest) {
     }
   );
 
-  // Exchange ?code=... for a session and set server cookies
-  await supabase.auth.exchangeCodeForSession();
+  // -- NEW: read the code from the query string and exchange it
+  const code = url.searchParams.get("code");
+  if (code) {
+    await supabase.auth.exchangeCodeForSession({ code });
+  }
+  // If there's no code (someone hit this URL manually), just redirect to /app
 
   return res;
 }
