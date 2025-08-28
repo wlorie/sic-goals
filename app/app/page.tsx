@@ -1,4 +1,6 @@
-﻿"use client";
+# Build the full updated file content in a here-string
+$new = @'
+"use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
@@ -20,7 +22,7 @@ export type Parts = {
   pair_id: string;
   part_name: PartName;
 
-  /* ========= Part I (now rendered as 2 goals in UI) ========= */
+  /* ========= Part I (2 goals rendered in UI) ========= */
   goal_statement1?: string | null;
   why_goal1?: string | null;
   measure1?: string | null;
@@ -37,7 +39,7 @@ export type Parts = {
   success_criteria2?: string | null;
   timeline2?: string | null;
 
-  /* legacy Goal 3 columns may still exist in DB; UI wonâ€™t render them */
+  /* legacy Goal 3 columns may exist in DB; UI won’t render them */
   goal_statement3?: string | null;
   why_goal3?: string | null;
   measure3?: string | null;
@@ -89,9 +91,16 @@ export type Parts = {
   p3_final_success_criteria2?: string | null;
   p3_final_timeline2?: string | null;
 
-  /* ========= Part IV (scaffold) ========= */
-  outcome_summary?: string | null;
-  goal_evidence?: string | null;
+  /* ========= Part IV (End of evaluation period) ========= */
+  p4_goal_statement1?: string | null;
+  p4_goal_revised1?: "yes" | "no" | null;
+  p4_goal_met1?: "met" | "not met" | "partially met" | null;
+  p4_goal_comment1?: string | null;
+
+  p4_goal_statement2?: string | null;
+  p4_goal_revised2?: "yes" | "no" | null;
+  p4_goal_met2?: "met" | "not met" | "partially met" | null;
+  p4_goal_comment2?: string | null;
 };
 
 export default function AppPage() {
@@ -166,9 +175,7 @@ export default function AppPage() {
     const base: Parts = data ?? { pair_id: pairId, part_name: part };
     const row: Parts = { ...base, ...(fields ?? {}) };
 
-    const { error } = await supabase
-      .from("parts")
-      .upsert(row, { onConflict: "pair_id,part_name" });
+    const { error } = await supabase.from("parts").upsert(row, { onConflict: "pair_id,part_name" });
 
     setSaving(false);
 
@@ -194,19 +201,17 @@ export default function AppPage() {
     }
   }
 
-  /* ---- Part 1 type + guard (defined once; reused below) ---- */
+  /* ---- Part 1 type + guard ---- */
   type Part1Value = Partial<Parts> & { pair_id: string; part_name: "Part1" };
   function isPart1(p: Parts | null): p is Part1Value {
     return !!p && p.part_name === "Part1";
   }
-  const part1Value: Part1Value = isPart1(data)
-    ? data
-    : { pair_id: pairId, part_name: "Part1" };
+  const part1Value: Part1Value = isPart1(data) ? data : { pair_id: pairId, part_name: "Part1" };
 
   if (!email)
     return (
       <div style={{ padding: 20, fontFamily: "system-ui" }}>
-        Checking sessionâ€¦ <a href="/login">Login</a>
+        Checking session... <a href="/login">Login</a>
       </div>
     );
 
@@ -222,11 +227,10 @@ export default function AppPage() {
         <select value={pairId} onChange={(e) => setPairId(e.target.value)}>
           {pairs.map((p) => (
             <option key={p.pair_id} value={p.pair_id}>
-  {(p.educator_name || "Educator")} (Educator) {" | "}
-  {(p.evaluator_name || "Evaluator")} (Evaluator) {" | "}
-  {(p.resolution_name || "Resolution")} (Resolution)
-</option>
-
+              {(p.educator_name || "Educator")} (Educator) {" | "}
+              {(p.evaluator_name || "Evaluator")} (Evaluator) {" | "}
+              {(p.resolution_name || "Resolution")} (Resolution)
+            </option>
           ))}
         </select>
 
@@ -261,9 +265,7 @@ export default function AppPage() {
           value={part1Value}
           onChange={(fields) =>
             setData((prev) => {
-              const base: Part1Value = isPart1(prev)
-                ? prev
-                : { pair_id: pairId, part_name: "Part1" };
+              const base: Part1Value = isPart1(prev) ? prev : { pair_id: pairId, part_name: "Part1" };
               return { ...base, ...fields } as Part1Value;
             })
           }
@@ -297,20 +299,48 @@ export default function AppPage() {
 
       {/* Part IV */}
       {part === "Part4" && (
-        <PartSection
-          key="p4"
-          pairId={pairId}
-          part="Part4"
-          record={data}
-          setRecord={setData}
-          onSave={() => save()}
-          canEdit={canEdit}
-          saving={saving}
-          fields={[
-            { key: "outcome_summary", label: "End-of-Year Outcome Summary", type: "textarea" },
-            { key: "goal_evidence", label: "Evidence of Goal Attainment", type: "textarea" },
-          ]}
-        />
+        <div>
+          {!canEdit && <ReadOnlyNotice />}
+
+          <p>Please complete this part at the end of the evaluation period.</p>
+          <hr />
+          <p>
+            For each goal, please insert the final goal statement (from Part 2). If the goal has changed
+            during the review period, then write the new, revised goal. Then, indicate whether the goal
+            was met, not met, or partially met. Please comment on why or how the goal was met, not met,
+            or partially met.
+          </p>
+          <hr />
+
+          <Part4GoalBox
+            n={1}
+            record={data ?? { pair_id: pairId, part_name: "Part4" }}
+            setField={(k, v) => setData({ ...(data ?? { pair_id: pairId, part_name: "Part4" }), [k]: v })}
+            disabled={!canEdit || saving}
+          />
+
+          <Part4GoalBox
+            n={2}
+            record={data ?? { pair_id: pairId, part_name: "Part4" }}
+            setField={(k, v) => setData({ ...(data ?? { pair_id: pairId, part_name: "Part4" }), [k]: v })}
+            disabled={!canEdit || saving}
+          />
+
+          <button
+            disabled={!canEdit || saving}
+            onClick={() => save()}
+            style={{
+              padding: "8px 12px",
+              border: "1px solid #333",
+              background: !canEdit || saving ? "#888" : "#111",
+              color: "#fff",
+              borderRadius: 8,
+              marginTop: 8,
+            }}
+          >
+            Save
+          </button>
+        </div>
       )}
     </main>
   );
@@ -374,7 +404,7 @@ function Part1({
   disabled: boolean;
   canEdit: boolean;
 }) {
-  const GOAL_COUNT = 2; // â† render only two goals in the UI
+  const GOAL_COUNT = 2; // render two goals
 
   const G = (n: number, prefix: string) => `${prefix}${n}` as const;
 
@@ -538,7 +568,7 @@ function GoalBox({
 }
 
 /* =========================
-   Part II (A/B/C + 2-goal flows, deselectable radios)
+   Part II (A/B/C + 2-goal flows)
 ========================= */
 function Part2({
   record,
@@ -560,7 +590,7 @@ function Part2({
   };
 
   const choice = (record.p2_choice ?? null) as "A" | "B" | "C" | null;
-  const setChoice = (v: "A" | "B" | "C" | null) => setField("p2_choice", v);
+  const setChoice = (v: "A" | "B" | "C" | "null" | null) => setField("p2_choice", v as any);
 
   return (
     <div>
@@ -573,7 +603,7 @@ function Part2({
         name="p2_choice"
         value="A"
         current={choice}
-        onChange={setChoice}
+        onChange={(v) => setChoice(v)}
         disabled={disabled}
         label={<b>A. Agree with the goals of Part 1.</b>}
       />
@@ -588,7 +618,7 @@ function Part2({
         name="p2_choice"
         value="B"
         current={choice}
-        onChange={setChoice}
+        onChange={(v) => setChoice(v)}
         disabled={disabled}
         label={
           <span>
@@ -627,7 +657,7 @@ function Part2({
         name="p2_choice"
         value="C"
         current={choice}
-        onChange={setChoice}
+        onChange={(v) => setChoice(v)}
         disabled={disabled}
         label={<b>C. Do not agree on goals.</b>}
       />
@@ -682,7 +712,7 @@ function Part2({
 }
 
 /* =========================
-   Part III (Resolution) â€“ A/B/C + reason + final goals (always shown)
+   Part III (Resolution) – A/B/C + reason + final goals
 ========================= */
 function Part3Resolution({
   record,
@@ -724,7 +754,7 @@ function Part3Resolution({
       <p>
         Your role is to resolve the disagreement between the Educator and their Evaluator. You may
         (A) agree with the goals of Part I, including any changes agreed to by the Educator and
-        Evaluator, or (B) agree with the Evaluatorâ€™s alternative goals. Please provide reasons for
+        Evaluator, or (B) agree with the Evaluator's alternative goals. Please provide reasons for
         your decision. If you have met with the Educator and Evaluator, and they have agreed to
         reformulated goals (Option C), you can indicate that here.
       </p>
@@ -767,7 +797,7 @@ function Part3Resolution({
         }
       />
 
-      {/* Reason (kept visible for simplicity) */}
+      {/* Reason */}
       <Box title="Reason for my decision:">
         <TArea
           disabled={disabled}
@@ -798,7 +828,7 @@ function Part3Resolution({
 
       <p style={{ fontWeight: 700, marginBottom: 6 }}>The following are final goals for Part 3.</p>
 
-      {/* Final Goals (always shown) */}
+      {/* Final Goals */}
       <GoalBox
         n={1}
         prefix="p3_final_"
@@ -835,72 +865,64 @@ function Part3Resolution({
 }
 
 /* =========================
-   Generic Part Section (IV)
+   Part IV goal widget
 ========================= */
-function PartSection({
-  pairId,
-  part,
+function Part4GoalBox({
+  n,
   record,
-  setRecord,
-  onSave,
-  canEdit,
-  saving,
-  fields,
+  setField,
+  disabled,
 }: {
-  pairId: string;
-  part: PartName;
-  record: Parts | null;
-  setRecord: (r: Parts | null) => void;
-  onSave: () => void;
-  canEdit: boolean;
-  saving: boolean;
-  fields: { key: keyof Parts; label: string; type: "textarea" | "text" }[];
+  n: 1 | 2;
+  record: Parts;
+  setField: (k: keyof Parts, v: string | null) => void;
+  disabled: boolean;
 }) {
-  const disabled = !canEdit || saving;
-
-  const setField =
-    (k: keyof Parts) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const base: Parts = record ?? { pair_id: pairId, part_name: part };
-      setRecord({ ...base, [k]: e.target.value });
-    };
+  const s = (suffix: string) => `p4_goal_${suffix}${n}` as keyof Parts;
 
   return (
-    <div>
-      {!canEdit && <ReadOnlyNotice />}
-
-      {fields.map((f) => (
-        <Box key={String(f.key)} title={f.label}>
-          {f.type === "textarea" ? (
-            <TArea
-              disabled={disabled}
-              value={(record?.[f.key] as string) ?? ""}
-              onChange={setField(f.key)}
-            />
-          ) : (
-            <TInput
-              disabled={disabled}
-              value={(record?.[f.key] as string) ?? ""}
-              onChange={setField(f.key)}
-            />
-          )}
-        </Box>
-      ))}
-
-      <button
+    <Box title={`Goal ${n}`}>
+      <label>{`Goal ${n} Statement`}</label>
+      <TArea
         disabled={disabled}
-        onClick={onSave}
-        style={{
-          padding: "8px 12px",
-          border: "1px solid #333",
-          background: disabled ? "#888" : "#111",
-          color: "#fff",
-          borderRadius: 8,
-        }}
+        value={(record[s("statement")] as string) ?? ""}
+        onChange={(e) => setField(s("statement"), e.target.value)}
+      />
+
+      <label>Was this goal revised (from Part 2 or 3) during the review period?</label>
+      <select
+        disabled={disabled}
+        value={(record[s("revised")] as string) ?? ""}
+        onChange={(e) => setField(s("revised"), e.target.value)}
       >
-        Save
-      </button>
-    </div>
+        <option value="">-- select --</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <label>This goal was</label>
+      <select
+        disabled={disabled}
+        value={(record[s("met")] as string) ?? ""}
+        onChange={(e) => setField(s("met"), e.target.value)}
+      >
+        <option value="">-- select --</option>
+        <option value="met">Met</option>
+        <option value="not met">Not met</option>
+        <option value="partially met">Partially met</option>
+      </select>
+
+      <label>Please comment</label>
+      <TArea
+        disabled={disabled}
+        value={(record[s("comment")] as string) ?? ""}
+        onChange={(e) => setField(s("comment"), e.target.value)}
+      />
+    </Box>
   );
 }
+'@
 
+# Write the file as UTF-8 WITHOUT BOM (avoids weird characters in Next.js)
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText("app/app/page.tsx", $new, $utf8NoBom)
