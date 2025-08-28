@@ -10,7 +10,8 @@ function esc(v: unknown): string {
 }
 
 export async function GET() {
-  const cookieStore = cookies();
+  // 👇 Next 15: cookies() is async in your setup
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
