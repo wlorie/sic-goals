@@ -3,16 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 
-type CookieOptions = {
-  domain?: string;
-  path?: string;
-  expires?: Date;
-  httpOnly?: boolean;
-  sameSite?: "lax" | "strict" | "none";
-  secure?: boolean;
-  maxAge?: number;
-};
-
 export default async function AdminPage() {
   const cookieStore = cookies();
 
@@ -21,14 +11,13 @@ export default async function AdminPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options?: CookieOptions) {
-          cookieStore.set({ name, value, ...(options ?? {}) });
-        },
-        remove(name: string, options?: CookieOptions) {
-          cookieStore.set({ name, value: "", ...(options ?? {}), expires: new Date(0) });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
         },
       },
     }
@@ -64,3 +53,4 @@ export default async function AdminPage() {
     </main>
   );
 }
+

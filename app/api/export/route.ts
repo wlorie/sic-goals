@@ -3,18 +3,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-type CookieOptions = {
-  domain?: string;
-  path?: string;
-  expires?: Date;
-  httpOnly?: boolean;
-  sameSite?: "lax" | "strict" | "none";
-  secure?: boolean;
-  maxAge?: number;
-};
-
 function esc(v: unknown): string {
-  if (v === null || v === undefined) return "";
+  if (v == null) return "";
   const s = String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
@@ -27,14 +17,13 @@ export async function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options?: CookieOptions) {
-          cookieStore.set({ name, value, ...(options ?? {}) });
-        },
-        remove(name: string, options?: CookieOptions) {
-          cookieStore.set({ name, value: "", ...(options ?? {}), expires: new Date(0) });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
         },
       },
     }
@@ -48,7 +37,7 @@ export async function GET() {
   const { data: isAdmin, error: adminErr } = await supabase.rpc("is_admin");
   if (adminErr || !isAdmin) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
-  // Query
+  // Query view
   const { data, error } = await supabase.from("parts_export").select("*");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -63,3 +52,4 @@ export async function GET() {
     },
   });
 }
+
