@@ -1,5 +1,3 @@
-# Build the full updated file content in a here-string
-$new = @'
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
@@ -590,7 +588,7 @@ function Part2({
   };
 
   const choice = (record.p2_choice ?? null) as "A" | "B" | "C" | null;
-  const setChoice = (v: "A" | "B" | "C" | "null" | null) => setField("p2_choice", v as any);
+  const setChoice = (v: "A" | "B" | "C" | null) => setField("p2_choice", v);
 
   return (
     <div>
@@ -921,8 +919,3 @@ function Part4GoalBox({
     </Box>
   );
 }
-'@
-
-# Write the file as UTF-8 WITHOUT BOM (avoids weird characters in Next.js)
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText("app/app/page.tsx", $new, $utf8NoBom)
