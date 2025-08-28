@@ -20,86 +20,38 @@ type PartName = "Part1" | "Part2" | "Part3" | "Part4";
 
 export type Parts = {
   pair_id: string;
-  part_name: PartName;
+  part_name: "Part1" | "Part2" | "Part3" | "Part4";
 
-  /* Part 1 (two goals) */
-  goal_statement1?: string | null;
-  why_goal1?: string | null;
-  measure1?: string | null;
-  why_measure1?: string | null;
-  monitoring_plan1?: string | null;
-  success_criteria1?: string | null;
-  timeline1?: string | null;
+  // Part1
+  goal_statement1?: string | null; why_goal1?: string | null; measure1?: string | null; why_measure1?: string | null;
+  monitoring_plan1?: string | null; success_criteria1?: string | null; timeline1?: string | null;
+  goal_statement2?: string | null; why_goal2?: string | null; measure2?: string | null; why_measure2?: string | null;
+  monitoring_plan2?: string | null; success_criteria2?: string | null; timeline2?: string | null;
+  alignment_toa?: string | null; alignment_dpas_dtgss?: string | null;
 
-  goal_statement2?: string | null;
-  why_goal2?: string | null;
-  measure2?: string | null;
-  why_measure2?: string | null;
-  monitoring_plan2?: string | null;
-  success_criteria2?: string | null;
-  timeline2?: string | null;
-
-  /* Legacy Goal 3 columns may still exist in DB; UI will not render them */
-  goal_statement3?: string | null;
-  why_goal3?: string | null;
-  measure3?: string | null;
-  why_measure3?: string | null;
-  monitoring_plan3?: string | null;
-  success_criteria3?: string | null;
-  timeline3?: string | null;
-
-    /* ========= Part I (Alignment fields) ========= */
-  alignment_toa?: string | null;            // Alignment with the SIC Theory of Action (ToA)
-  alignment_dpas_dtgss?: string | null;     // Alignment with DPAS/DTGSS/Standards of Practice
-
-
-  /* Part 2 (A/B/C + Final/Proposed Goals) */
+  // Part2
   p2_choice?: "A" | "B" | "C" | null;
-  p2_final_goal_statement1?: string | null;
-  p2_final_measure1?: string | null;
-  p2_final_success_criteria1?: string | null;
-  p2_final_timeline1?: string | null;
-  p2_final_goal_statement2?: string | null;
-  p2_final_measure2?: string | null;
-  p2_final_success_criteria2?: string | null;
-  p2_final_timeline2?: string | null;
-  p2_proposed_goal_statement1?: string | null;
-  p2_proposed_measure1?: string | null;
-  p2_proposed_success_criteria1?: string | null;
-  p2_proposed_timeline1?: string | null;
-  p2_proposed_goal_statement2?: string | null;
-  p2_proposed_measure2?: string | null;
-  p2_proposed_success_criteria2?: string | null;
-  p2_proposed_timeline2?: string | null;
   p2_rationale?: string | null;
+  p2_final_goal_statement1?: string | null; p2_final_measure1?: string | null; p2_final_success_criteria1?: string | null; p2_final_timeline1?: string | null;
+  p2_final_goal_statement2?: string | null; p2_final_measure2?: string | null; p2_final_success_criteria2?: string | null; p2_final_timeline2?: string | null;
+  p2_proposed_goal_statement1?: string | null; p2_proposed_measure1?: string | null; p2_proposed_success_criteria1?: string | null; p2_proposed_timeline1?: string | null;
+  p2_proposed_goal_statement2?: string | null; p2_proposed_measure2?: string | null; p2_proposed_success_criteria2?: string | null; p2_proposed_timeline2?: string | null;
 
-  /* Part 3 (Resolution) */
+  // Part3
   p3_choice?: "A" | "B" | "C" | null;
   p3_reason?: string | null;
-  p3_final_goal_statement1?: string | null;
-  p3_final_measure1?: string | null;
-  p3_final_success_criteria1?: string | null;
-  p3_final_timeline1?: string | null;
-  p3_final_goal_statement2?: string | null;
-  p3_final_measure2?: string | null;
-  p3_final_success_criteria2?: string | null;
-  p3_final_timeline2?: string | null;
+  p3_final_goal_statement1?: string | null; p3_final_measure1?: string | null; p3_final_success_criteria1?: string | null; p3_final_timeline1?: string | null;
+  p3_final_goal_statement2?: string | null; p3_final_measure2?: string | null; p3_final_success_criteria2?: string | null; p3_final_timeline2?: string | null;
 
-  /* Part 4 (Outcomes) */
-  p4_goal_statement1?: string | null;
-  p4_goal_revised1?: "yes" | "no" | null;
-  p4_goal_met1?: "met" | "not met" | "partially met" | null;
+  // Part4
+  p4_goal_statement1?: string | null; p4_revised1?: "yes" | "no" | null;
+  p4_status1?: "met" | "not met" | "partially met" | null;
   p4_comment1?: string | null;
-
-  p4_goal_statement2?: string | null;
-  p4_goal_revised2?: "yes" | "no" | null;
-  p4_goal_met2?: "met" | "not met" | "partially met" | null;
+  p4_goal_statement2?: string | null; p4_revised2?: "yes" | "no" | null;
+  p4_status2?: "met" | "not met" | "partially met" | null;
   p4_comment2?: string | null;
-
-  /* (Older Part 4 placeholders retained for back-compat; UI not using them) */
-  outcome_summary?: string | null;
-  goal_evidence?: string | null;
 };
+
 
 /* ========== UI helpers: Banner & Spinner & Primitives ========== */
 
