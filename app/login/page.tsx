@@ -11,51 +11,94 @@ export default function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const canResend = cooldown === 0;
+
+  // optional: small resend cooldown so users don't spam email
+  function startCooldown(seconds = 30) {
+    setCooldown(seconds);
+    const id = setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
+    if (!email) return;
+
     setSending(true);
     setMsg(null);
     setErr(null);
 
-    // Send a 6-digit code (NOT a magic link)
+    // Send an email OTP (Supabase will also include a link, but we ignore it)
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // omit emailRedirectTo to prefer code-based OTP
-        shouldCreateUser: true,
+        shouldCreateUser: true, // create user if not exists
       },
     });
 
     setSending(false);
     if (error) {
       setErr(error.message);
-    } else {
-      setMsg("We emailed you a 6-digit code. Enter it below.");
-      setStep("enter-code");
+      return;
     }
+
+    setMsg("We emailed you a 6-digit code. Enter it below.");
+    setStep("enter-code");
+    startCooldown(30);
   }
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
+    if (!email || code.trim().length < 6) return;
+
     setVerifying(true);
     setErr(null);
     setMsg(null);
 
+    // Verify the 6-digit code
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: code.trim(),
-      type: "email", // 6-digit email OTP
+      type: "email", // <-- 6-digit email OTP
     });
 
     setVerifying(false);
+
     if (error || !data?.user) {
       setErr(error?.message ?? "Invalid code. Please try again.");
       return;
     }
 
-    // Success → go to the app
+    // success → go to the app (SSR not required)
     window.location.href = "/app";
+  }
+
+  async function resendCode() {
+    if (!canResend || !email) return;
+    setErr(null);
+    setMsg(null);
+    setSending(true);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+
+    setSending(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    setMsg("We sent a new code. Check your inbox.");
+    startCooldown(30);
   }
 
   return (
@@ -85,7 +128,7 @@ export default function LoginPage() {
         {step === "enter-email" && (
           <>
             <p style={{ color: "#555", marginBottom: 16 }}>
-              Enter your email and we’ll send you a 6-digit code.
+              Enter your email and we’ll send you a <b>6-digit code</b>.
             </p>
 
             {msg && (
@@ -220,7 +263,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={verifying || code.length < 6}
+                disabled={verifying || code.trim().length < 6}
                 style={{
                   width: "100%",
                   padding: "10px 12px",
@@ -237,24 +280,39 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <button
-              onClick={() => setStep("enter-email")}
-              style={{
-                marginTop: 10,
-                background: "transparent",
-                border: "none",
-                color: "#0645AD",
-                textDecoration: "underline",
-                cursor: "pointer",
-              }}
-            >
-              Use a different email
-            </button>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+              <button
+                onClick={() => setStep("enter-email")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#0645AD",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+              >
+                Use a different email
+              </button>
+
+              <button
+                onClick={resendCode}
+                disabled={!canResend || sending}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: canResend ? "#0645AD" : "#888",
+                  textDecoration: "underline",
+                  cursor: canResend ? "pointer" : "not-allowed",
+                }}
+              >
+                {canResend ? "Resend code" : `Resend in ${cooldown}s`}
+              </button>
+            </div>
           </>
         )}
 
         <p style={{ fontSize: 12, color: "#666", marginTop: 12 }}>
-          If you prefer magic links, ask IT to allowlist our auth emails so links aren’t pre-clicked.
+          If you don’t receive the code, check spam or ask IT to allowlist Supabase auth emails.
         </p>
       </div>
     </main>
