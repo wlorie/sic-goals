@@ -29,31 +29,50 @@ export default function LoginPage() {
   }
 
   async function sendCode(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email) return;
+  e.preventDefault();
+  const addr = email.trim();
+  if (!addr) return;
 
-    setSending(true);
-    setMsg(null);
-    setErr(null);
+  setSending(true);
+  setMsg(null);
+  setErr(null);
 
-    // Send an email OTP (Supabase will also include a link, but we ignore it)
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true, // create user if not exists
-      },
-    });
+  // 1) Pre-check: only allow roster/admin emails
+  const { data: allowed, error: checkErr } = await supabase.rpc("is_email_allowed", {
+    p_email: addr,
+  });
 
+  if (checkErr) {
     setSending(false);
-    if (error) {
-      setErr(error.message);
-      return;
-    }
-
-    setMsg("We emailed you a 6-digit code. Enter it below.");
-    setStep("enter-code");
-    startCooldown(30);
+    setErr(checkErr.message || "Unable to validate email. Please try again.");
+    return;
   }
+  if (!allowed) {
+    setSending(false);
+    setErr("This email is not recognized in our roster. Please contact your coordinator.");
+    return;
+  }
+
+  // 2) Send the 6-digit code (we ignore the link)
+  const { error } = await supabase.auth.signInWithOtp({
+    email: addr,
+    options: {
+      shouldCreateUser: true, // safe: user exists after passing the allow-list
+    },
+  });
+
+  setSending(false);
+  if (error) {
+    setErr(error.message);
+    return;
+  }
+
+  setMsg("We emailed you a 6-digit code. Enter it below.");
+  setStep("enter-code");
+  // if you have the helper from earlier:
+  if (typeof startCooldown === "function") startCooldown(30);
+}
+
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
