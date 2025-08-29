@@ -94,6 +94,28 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function downloadRosterCSV() {
+  setError(null);
+  setDownloading(true);
+  const { data, error } = await supabase.rpc("admin_export_roster");
+  setDownloading(false);
+  if (error) {
+    setError(error.message);
+    return;
+  }
+  const rows = (data ?? []) as Row[];
+  const csv = toCSV(rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "roster_export.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
   return (
     <main style={{ padding: 20, fontFamily: "system-ui", maxWidth: 900, margin: "0 auto" }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Admin</h1>
@@ -118,7 +140,9 @@ export default function AdminPage() {
       {!checking && isAdmin && (
         <>
           <p style={{ marginBottom: 16 }}>
-            Read-only export of all records. Click the button below to download CSV.
+            Read-only exports of all records. 
+            Click the buttons below to download a CSV of all data records and 
+            a CSV of all roster records.
           </p>
           <button
             onClick={downloadCSV}
@@ -136,6 +160,22 @@ export default function AdminPage() {
           >
             {downloading ? "Preparing…" : "Download CSV"}
           </button>
+          <button
+  onClick={downloadRosterCSV}
+  disabled={downloading}
+  style={{
+    display: "inline-block",
+    padding: "10px 12px",
+    borderRadius: 8,
+    border: "1px solid #111",
+    background: downloading ? "#888" : "#111",
+    color: "#fff",
+    fontWeight: 600,
+    cursor: downloading ? "not-allowed" : "pointer",
+  }}
+>
+  {downloading ? "Preparing…" : "Download Roster CSV"}
+</button>
           {error && (
             <div
               style={{
