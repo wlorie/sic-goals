@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase"; // ⬅ use the shared client
 
 type Row = Record<string, unknown>;
 
@@ -19,32 +19,58 @@ function toCSV(rows: Row[]) {
 }
 
 export default function AdminPage() {
-  const supabase = useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), []);
-
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+
+    async function check() {
       setChecking(true);
       setError(null);
-      const { data: userRes, error: uerr } = await supabase.auth.getUser();
-      if (uerr || !userRes?.user) {
-        setError("You are not signed in.");
-        setChecking(false);
+
+      // 1) Get current session (more reliable right after navigation)
+      const { data: sessRes, error: sErr } = await supabase.auth.getSession();
+      if (sErr || !sessRes?.session?.user) {
+        // Not signed in yet (or restoring); we’ll also listen below.
+        if (mounted) setChecking(false);
         return;
       }
-      const { data: ok, error: aerr } = await supabase.rpc("is_admin");
-      if (aerr) setError(aerr.message);
-      setIsAdmin(!!ok);
-      setChecking(false);
-    })();
-  }, [supabase]);
+
+      // 2) Confirm admin via RPC
+      const { data: ok, error: aErr } = await supabase.rpc("is_admin");
+      if (mounted) {
+        if (aErr) setError(aErr.message);
+        setIsAdmin(!!ok);
+        setChecking(false);
+      }
+    }
+
+    check();
+
+    // 3) Listen for auth changes (restores after OTP flow / page nav)
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (!mounted) return;
+      if (session?.user) {
+        // Re-check admin once session is present
+        (async () => {
+          const { data: ok } = await supabase.rpc("is_admin");
+          setIsAdmin(!!ok);
+          setChecking(false);
+        })();
+      } else {
+        setIsAdmin(false);
+        setChecking(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   async function downloadCSV() {
     setError(null);
@@ -85,7 +111,7 @@ export default function AdminPage() {
             marginTop: 10,
           }}
         >
-          {error ?? "You do not have admin access."}
+          You are not signed in or do not have admin access.
         </div>
       )}
 
@@ -129,3 +155,4 @@ export default function AdminPage() {
     </main>
   );
 }
+
