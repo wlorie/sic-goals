@@ -318,6 +318,12 @@ export default function AppPage() {
       </div>
     );
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/login"; // redirect to login page
+  }
+
+
   return (
     <main style={{ maxWidth: 1000, margin: "20px auto", fontFamily: "system-ui" }}>
       <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -325,6 +331,22 @@ export default function AppPage() {
   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
     {email}
     <AdminLink />
+
+<button
+      onClick={handleLogout}
+      style={{
+        padding: "4px 8px",
+        borderRadius: 6,
+        border: "1px solid #ccc",
+        background: "#fff",
+        cursor: "pointer",
+      }}
+    >
+      Log out
+    </button>
+
+
+
   </div>
 </header>
 
