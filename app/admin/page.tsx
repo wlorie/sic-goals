@@ -14,7 +14,7 @@ function toCSV(rows: Row[]) {
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const header = cols.join(",");
-  const body = rows.map(r => cols.map(c => esc(r[c])).join(",")).join("\n");
+  const body = rows.map((r) => cols.map((c) => esc(r[c])).join(",")).join("\n");
   return [header, body].join("\n");
 }
 
@@ -34,7 +34,6 @@ export default function AdminPage() {
       // 1) Get current session (more reliable right after navigation)
       const { data: sessRes, error: sErr } = await supabase.auth.getSession();
       if (sErr || !sessRes?.session?.user) {
-        // Not signed in yet (or restoring); we’ll also listen below.
         if (mounted) setChecking(false);
         return;
       }
@@ -54,7 +53,6 @@ export default function AdminPage() {
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
       if (!mounted) return;
       if (session?.user) {
-        // Re-check admin once session is present
         (async () => {
           const { data: ok } = await supabase.rpc("is_admin");
           setIsAdmin(!!ok);
@@ -95,30 +93,51 @@ export default function AdminPage() {
   }
 
   async function downloadRosterCSV() {
-  setError(null);
-  setDownloading(true);
-  const { data, error } = await supabase.rpc("admin_export_roster");
-  setDownloading(false);
-  if (error) {
-    setError(error.message);
-    return;
+    setError(null);
+    setDownloading(true);
+    const { data, error } = await supabase.rpc("admin_export_roster");
+    setDownloading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    const rows = (data ?? []) as Row[];
+    const csv = toCSV(rows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "roster_export.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
-  const rows = (data ?? []) as Row[];
-  const csv = toCSV(rows);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "roster_export.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
 
   return (
     <main style={{ padding: 20, fontFamily: "system-ui", maxWidth: 900, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Admin</h1>
+      {/* Header with Logout */}
+      <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+        <div><b>Admin</b></div>
+        <div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            style={{
+              padding: "6px 10px",
+              border: "1px solid #333",
+              background: "#111",
+              color: "#fff",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+          >
+            Log out
+          </button>
+        </div>
+      </header>
 
       {checking && <p>Checking admin access…</p>}
 
@@ -140,42 +159,45 @@ export default function AdminPage() {
       {!checking && isAdmin && (
         <>
           <p style={{ marginBottom: 16 }}>
-            Read-only exports of all records. 
-            Click the buttons below to download a CSV of all data records and 
-            a CSV of all roster records.
+            Read-only exports of all records. Click a button below to download CSV.
           </p>
-          <button
-            onClick={downloadCSV}
-            disabled={downloading}
-            style={{
-              display: "inline-block",
-              padding: "10px 12px",
-              borderRadius: 8,
-              border: "1px solid #111",
-              background: downloading ? "#888" : "#111",
-              color: "#fff",
-              fontWeight: 600,
-              cursor: downloading ? "not-allowed" : "pointer",
-            }}
-          >
-            {downloading ? "Preparing…" : "Download CSV"}
-          </button>
-          <button
-  onClick={downloadRosterCSV}
-  disabled={downloading}
-  style={{
-    display: "inline-block",
-    padding: "10px 12px",
-    borderRadius: 8,
-    border: "1px solid #111",
-    background: downloading ? "#888" : "#111",
-    color: "#fff",
-    fontWeight: 600,
-    cursor: downloading ? "not-allowed" : "pointer",
-  }}
->
-  {downloading ? "Preparing…" : "Download Roster CSV"}
-</button>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              onClick={downloadCSV}
+              disabled={downloading}
+              style={{
+                display: "inline-block",
+                padding: "10px 12px",
+                borderRadius: 8,
+                border: "1px solid #111",
+                background: downloading ? "#888" : "#111",
+                color: "#fff",
+                fontWeight: 600,
+                cursor: downloading ? "not-allowed" : "pointer",
+              }}
+            >
+              {downloading ? "Preparing…" : "Download Parts CSV"}
+            </button>
+
+            <button
+              onClick={downloadRosterCSV}
+              disabled={downloading}
+              style={{
+                display: "inline-block",
+                padding: "10px 12px",
+                borderRadius: 8,
+                border: "1px solid #111",
+                background: downloading ? "#888" : "#111",
+                color: "#fff",
+                fontWeight: 600,
+                cursor: downloading ? "not-allowed" : "pointer",
+              }}
+            >
+              {downloading ? "Preparing…" : "Download Roster CSV"}
+            </button>
+          </div>
+
           {error && (
             <div
               style={{
@@ -195,4 +217,3 @@ export default function AdminPage() {
     </main>
   );
 }
-
