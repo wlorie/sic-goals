@@ -601,7 +601,7 @@ function Part1({
           </a>
           {", "}
           <a
-            href="https://education.delaware.gov/"
+            href="https://education.delaware.gov/wp-content/uploads/2024/03/ed_eval_2016_component_rubric_for_specialists.pdf"
             target="_blank"
             rel="noreferrer"
             style={{ color: "#0645AD", textDecoration: "underline" }}
@@ -610,7 +610,7 @@ function Part1({
           </a>
           {", "}
           <a
-            href="https://education.delaware.gov/"
+            href="https://education.delaware.gov/wp-content/uploads/2024/03/ed_eval_dpas_for_admin_rubrics_only.pdf"
             target="_blank"
             rel="noreferrer"
             style={{ color: "#0645AD", textDecoration: "underline" }}
